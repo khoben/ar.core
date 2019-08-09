@@ -30,8 +30,7 @@ endif
 
 all: $(BIN)/$(EXECUTABLE)
 
-run: clean all
-	$(BRING_DLL)
+run: clean all #$(BRING_DLL)
 	$(CLEAR)
 	./$(BIN)/$(EXECUTABLE)
 
