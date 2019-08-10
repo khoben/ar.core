@@ -1,4 +1,6 @@
 #include "opencv2/opencv.hpp"
+#include "vector"
+#include "CvUtils.hpp"
 
 using namespace cv;
 
@@ -14,9 +16,11 @@ int main(int, char **)
     {
         Mat frame;
         cap >> frame; // get a new frame from camera
-        cvtColor(frame, edges, COLOR_BGR2GRAY);
-        GaussianBlur(edges, edges, Size(7, 7), 1.5, 1.5);
-        Canny(edges, edges, 0, 30, 3);
+        // cvtColor(frame, edges, COLOR_BGR2GRAY);
+        // GaussianBlur(edges, edges, Size(7, 7), 1.5, 1.5);
+        // Canny(edges, edges, 0, 30, 3);
+        ObjectPosition pts = {Point2f(0, 0), Point2f(0, 30), Point2f(30, 30), Point2f(30, 0)};
+        edges = CvUtils::createMask(frame.size(), pts);
         imshow("edges", edges);
         if (waitKey(30) >= 0)
             break;
