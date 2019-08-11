@@ -101,10 +101,8 @@ public:
     // Given three colinear points p, q, r, the function checks if
     // point q lies on line segment 'pr'
     static bool onSegment(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
-        if (q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) and
-            q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y))
-            return true;
-        return false;
+        return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) and
+               q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
     }
 
     // To find orientation of ordered triplet (p, q, r).
