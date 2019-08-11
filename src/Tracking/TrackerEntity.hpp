@@ -3,11 +3,11 @@
 #ifndef __TRACKERENTITY__
 #define __TRACKERENTITY__
 
-class TrackerEntity
-{
+class TrackerEntity {
 
 public:
     TrackerEntity();
+
     ~TrackerEntity();
 };
 

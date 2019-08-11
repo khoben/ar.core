@@ -10,8 +10,7 @@
 #include <algorithm>
 #include "src/Utils/CvUtils.hpp"
 
-class Tracking
-{
+class Tracking {
 private:
     cv::Mat prevFrame;             // processed frame
     ObjectPosition objectPosition; // coords of object`s corners
@@ -43,7 +42,7 @@ public:
      * @param frame - frame
      * @param pos - position
      */
-    void start(const cv::Mat &frame, const ObjectPosition& pos);
+    void start(const cv::Mat &frame, const ObjectPosition &pos);
 
     /**
      * @brief Trying continue tracking
@@ -53,6 +52,7 @@ public:
      * @return false - tracking failes
      */
     bool keepTracking(const cv::Mat &frame);
+
     ~Tracking();
 };
 

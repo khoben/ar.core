@@ -3,11 +3,11 @@
 #ifndef __RECOGNITION__
 #define __RECOGNITION__
 
-class Recognition
-{
+class Recognition {
 
 public:
     Recognition();
+
     ~Recognition();
 };
 
