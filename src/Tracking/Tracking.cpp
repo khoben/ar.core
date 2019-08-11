@@ -39,7 +39,7 @@ bool Tracking::keepTracking(const cv::Mat &img)
     }
     else
     {
-        homography = cv::findHomography(cv::Mat(corners), cv::Mat(nextCorners), opticalFlowStatus, CV_RANSAC, 5);
+        homography = cv::findHomography(cv::Mat(corners), cv::Mat(nextCorners), opticalFlowStatus, cv::RANSAC, 5);
         if (cv::countNonZero(homography) == 0)
         {
             return false;
@@ -47,6 +47,7 @@ bool Tracking::keepTracking(const cv::Mat &img)
         else
         {
             // calc object position
+            
         }
     }
 }
