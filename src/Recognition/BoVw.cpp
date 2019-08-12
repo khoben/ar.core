@@ -48,3 +48,25 @@ cv::Mat BoVW::search(const cv::Mat &feature) {
     return id;
 }
 
+std::vector<QueryItem>
+BoVW::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountRes) {
+    std::vector<QueryItem> queryReturn;
+    voteQueryFeatures(keyPoints, ids);
+    std::vector<QueryItem> tmp = getMatchResults(keyPoints);
+    queryReturn = filterGeomResults(keyPoints, tmp, size, amountRes);
+    return nullptr;
+}
+
+void BoVW::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids) {
+
+}
+
+std::vector<QueryItem> BoVW::getMatchResults(std::vector<cv::KeyPoint> keyPoints) {
+    return std::vector<QueryItem>();
+}
+
+std::vector<QueryItem>
+BoVW::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size, int amountRes) {
+    return std::vector<QueryItem>();
+}
+
