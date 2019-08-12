@@ -20,7 +20,7 @@ add_executable(ar_core
         src/main.cpp
         src/Recognition/Recognition.cpp
         src/Tracking/TrackerEntity.cpp
-        src/Tracking/Tracking.cpp)
+        src/Tracking/Tracking.cpp src/AR/Ar.cpp src/AR/Ar.hpp src/Recognition/BoVw.cpp src/Recognition/BoVw.hpp)
 
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs opencv_videoio opencv_video)
 
