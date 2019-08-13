@@ -4,6 +4,8 @@ Recognition::Recognition() {
     //TODO: init detector and descriptor
     vw = new BoVW();
     featureDetector = cv::AKAZE::create();
+    imageAmount = 0;
+    featureAmount = 0;
 }
 
 void Recognition::createBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters) {
@@ -92,7 +94,7 @@ std::vector<QueryItem> Recognition::queryImage(const cv::Mat &img, int amountRes
     if (status < 0)
         return queryReturn;
 
-    queryReturn = vw->searchImageId(kp, ids, img.size(), amountRes);
+    queryReturn = searchImageId(kp, ids, img.size(), amountRes);
     return queryReturn;
 }
 
@@ -109,6 +111,38 @@ int Recognition::getCandidateKpId() {
         }
     }
     return 0;
+}
+
+std::vector<QueryItem>
+Recognition::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountRes) {
+    std::vector<QueryItem> queryReturn;
+    voteQueryFeatures(keyPoints, ids);
+    std::vector<QueryItem> tmp = getMatchResults(keyPoints);
+    queryReturn = filterGeomResults(keyPoints, tmp, size, amountRes);
+    clearVote();
+    return queryReturn;
+}
+
+void Recognition::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids) {
+
+}
+
+std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> keyPoints) {
+    
+    return std::vector<QueryItem>();
+}
+
+std::vector<QueryItem>
+Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size, int amountRes) {
+    return std::vector<QueryItem>();
+}
+
+void Recognition::clearVote() {
+    auto it = voteStorage.begin();
+    while(it != voteStorage.end()){
+        it->second->clear();
+        it++;
+    }
 }
 
 Recognition::~Recognition() = default;

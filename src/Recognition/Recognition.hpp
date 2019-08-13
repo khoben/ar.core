@@ -13,6 +13,15 @@
 //    SIFT
 //};
 
+struct QueryItem{
+    int imgId;
+    double probability;
+    int amountMatched;
+    std::vector<cv::Point2f> objPose;
+    cv::Size imgSize;
+    cv::Mat pose;
+};
+
 typedef struct{
     int in_feat_i;
     int keypoint_id;
@@ -50,6 +59,18 @@ public:
     int storeImageFeatures(int id, const cv::Size& size, std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids);
 
     int getCandidateKpId();
+
+    std::vector<QueryItem>
+    searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountRes);
+
+    void voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids);
+
+    std::vector<QueryItem> getMatchResults(std::vector<cv::KeyPoint> keyPoints);
+
+    std::vector<QueryItem>
+    filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size, int amountRes);
+
+    void clearVote();
 };
 
 #endif // __RECOGNITION__
