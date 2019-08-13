@@ -4,6 +4,7 @@
 #define __RECOGNITION__
 
 #include <opencv2/features2d/features2d.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
 #include "src/Utils/CvUtils.hpp"
 #include "src/Recognition/BoVw.hpp"
 #include <map>
@@ -44,7 +45,7 @@ private:
     int imageAmount;
     int featureAmount;
     int MIN_MATCH = 6;
-    float MIN_PROBABILITY = 0.9f;
+    float MIN_PROBABILITY = 0.75f;
     float DISTANTION_TOLERANCE = 5e-3;
 
     std::multimap<int, featureInfo> featureStore;
@@ -59,7 +60,7 @@ public:
     int addTrackImage(const cv::Mat &img);
 
     std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
-
+    float probDistribution(int numFeatures, int numMatch, float pp);
     ~Recognition();
 
 private:
@@ -82,8 +83,6 @@ private:
     filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size, int amountRes);
 
     void clearVote();
-
-    float probDistribution(int numFeatures, int numMatch, float pp);
 
     void
     findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable, std::vector<cv::Point2f>& q,

@@ -4,3 +4,4 @@ bin/
 lib/
 cmake-build-debug/
 howto.txt
+resources/

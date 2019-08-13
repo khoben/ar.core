@@ -3,8 +3,10 @@
 BoVW::BoVW() {
 //    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
     descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,10,2));
+//    descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
     VOTE_NUM = 1;
-    RADIUS = 0.2;
+//    RADIUS = 0.2;
+    RADIUS = 0.99f;
 }
 
 void BoVW::addFeatures(const cv::Mat &feature) {
@@ -22,9 +24,8 @@ BoVW::~BoVW() {
 void BoVW::create(int amountCluster) {
     if (amountCluster > 0) {
         //TODO: k-means clustering
-    } else {
-        descriptorMatcher->train();
     }
+    descriptorMatcher->train();
 }
 
 cv::Mat BoVW::search(const cv::Mat &feature) {
@@ -37,11 +38,12 @@ cv::Mat BoVW::search(const cv::Mat &feature) {
 
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < VOTE_NUM; ++j) {
-            cv::DMatch match = matchId[i][j];
-            if (match.distance >= RADIUS) {
+            cv::DMatch matchM = matchId[i][0];
+            cv::DMatch matchN = matchId[i][1];
+            if (matchM.distance >= RADIUS * matchN.distance) {
                 id.at<int>(i, j) = -1;
             } else {
-                id.at<int>(i, j) = match.trainIdx;
+                id.at<int>(i, j) = matchM.trainIdx;
             }
         }
     }

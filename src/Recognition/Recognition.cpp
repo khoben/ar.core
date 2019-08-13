@@ -4,6 +4,7 @@ Recognition::Recognition() {
     //TODO: init detector and descriptor
     vw = new BoVW();
     featureDetector = cv::AKAZE::create();
+//    featureDetector = cv::xfeatures2d::SIFT::create();
     imageAmount = 0;
     featureAmount = 0;
 }
@@ -212,7 +213,7 @@ Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<
         pose = cv::findHomography(cv::Mat(r), cv::Mat(q), cv::RANSAC, thresholdDist);
         std::vector<cv::Point2f> posePoint = CvUtils::affineTransformRect(imageInfoStore[imgId].img_size, pose);
 
-        if (CvUtils::proveRect(posePoint)) {
+        if (CvUtils::_proveRect(posePoint)) {
             queryItem.pose = pose;
             queryItem.objPose = posePoint;
             queryResult.push_back(queryItem);
@@ -235,11 +236,9 @@ void Recognition::clearVote() {
 }
 
 float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
-    if (pp==1.0f)
-        return pp;
     float prob = 0.f;
-    float logPp = log(pp);
-    float logNp = log(1.f - pp);
+    float logPp = log(1.f - pp);
+    float logNp = log(pp);
     float tmp;
     for (int i = 0; i <= numMatch; ++i) {
         tmp = 0.f;

@@ -106,6 +106,48 @@ public:
         return isRectAnyOrder(pts[0], pts[1], pts[2], pts[3]);
     }
 
+    static bool _proveRect(std::vector<cv::Point2f>& rect_pts)
+    {
+        CV_Assert(rect_pts.size()==4);
+
+        bool result_f = true;
+        float vec[4][2];
+        int i;
+
+        vec[0][0] = rect_pts[1].x - rect_pts[0].x;
+        vec[0][1] = rect_pts[1].y - rect_pts[0].y;
+        vec[1][0] = rect_pts[2].x - rect_pts[1].x;
+        vec[1][1] = rect_pts[2].y - rect_pts[1].y;
+        vec[2][0] = rect_pts[3].x - rect_pts[2].x;
+        vec[2][1] = rect_pts[3].y - rect_pts[2].y;
+        vec[3][0] = rect_pts[0].x - rect_pts[3].x;
+        vec[3][1] = rect_pts[0].y - rect_pts[3].y;
+
+        int s;
+        float val = vec[3][0] * vec[0][1] - vec[3][1] * vec[0][0];
+        if(val > 0)
+            s = 1;
+        else
+            s = -1;
+
+//	if(vec[3][0] * vec[0][0] + vec[3][1] * vec[0][1] >= 0)
+//		result_f = false;
+
+        for(i=0; i<3; i++){
+//		if(vec[i][0] * vec[i+1][0] + vec[i][1] * vec[i+1][1] >= 0){
+//			result_f = false;
+//			break;
+//		}
+            val = vec[i][0] * vec[i+1][1] - vec[i][1] * vec[i+1][0];
+            if( val * s <= 0){
+                result_f = false;
+                break;
+            }
+        }
+
+        return result_f;
+    }
+
     // Given three colinear points p, q, r, the function checks if
     // point q lies on line segment 'pr'
     static bool onSegment(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
