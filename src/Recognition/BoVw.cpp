@@ -48,3 +48,14 @@ cv::Mat BoVW::search(const cv::Mat &feature) {
     return id;
 }
 
+int BoVW::size() const {
+    std::vector<cv::Mat> descriptor = descriptorMatcher->getTrainDescriptors();
+    int num = 0;
+    std::for_each(descriptor.begin(), descriptor.end(),
+                  [&num](const cv::Mat &mat) {
+                      num += mat.rows;
+                  }
+    );
+    return num;
+}
+

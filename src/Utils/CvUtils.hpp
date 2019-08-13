@@ -188,6 +188,22 @@ public:
 
         return count;
     }
+
+    static std::vector<cv::Point2f> affineTransformRect(cv::Size size, cv::Mat mat) {
+        std::vector<cv::Point2f> points;
+        float width = (float) (size.width) - 1;
+        float height = (float) (size.height) - 1;
+        cv::Mat srcMat = (cv::Mat_<double>(3, 4) << 0, 0, width, width, 0, height, height, 0, 1, 1, 1, 1);
+        cv::Mat destMat = mat * srcMat;
+        cv::Point2f pt;
+        for (int i = 0; i < 4; i++) {
+            pt.x = (float) (destMat.at<double>(0, i) / destMat.at<double>(2, i));
+            pt.y = (float) (destMat.at<double>(1, i) / destMat.at<double>(2, i));
+            points.push_back(pt);
+        }
+
+        return points;
+    }
 };
 
 #endif // __CVUTILS__

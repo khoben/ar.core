@@ -94,7 +94,7 @@ std::vector<QueryItem> Recognition::queryImage(const cv::Mat &img, int amountRes
     if (status < 0)
         return queryReturn;
 
-    queryReturn = searchImageId(kp, ids, img.size(), amountRes);
+    queryReturn = searchImageId(kp, ids, img.size(), vw->size(), amountRes);
     return queryReturn;
 }
 
@@ -105,7 +105,7 @@ int Recognition::getCandidateKpId() {
         return featureAmount;
     } else if (featureAmount > size) {
         for (int i = 1; i <= featureAmount; ++i) {
-            if(keyPointStore.count(i) == 0){
+            if (keyPointStore.count(i) == 0) {
                 return i;
             }
         }
@@ -114,33 +114,151 @@ int Recognition::getCandidateKpId() {
 }
 
 std::vector<QueryItem>
-Recognition::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountRes) {
+Recognition::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountWords,
+                           int amountRes) {
     std::vector<QueryItem> queryReturn;
     voteQueryFeatures(keyPoints, ids);
-    std::vector<QueryItem> tmp = getMatchResults(keyPoints);
+    std::vector<QueryItem> tmp = getMatchResults(keyPoints, amountWords);
     queryReturn = filterGeomResults(keyPoints, tmp, size, amountRes);
     clearVote();
     return queryReturn;
 }
 
 void Recognition::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids) {
+    std::multimap<int, featureInfo>::iterator featureIt;
+    std::map<int, std::vector<featureVote> *>::iterator voteIt;
+    featureVote vote;
+    featureInfo feature;
 
+    int size = keyPoints.size(), voteNum = vw->getVote(),
+            idsIdx = 0;
+
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < voteNum; ++j) {
+            if (ids[idsIdx] >= 0) {
+                featureIt = featureStore.find(ids[idsIdx]);
+                while (featureIt != featureStore.end() && featureIt->first == ids[idsIdx]) {
+                    feature = featureIt->second;
+                    vote.in_feat_i = i;
+                    vote.keypoint_id = feature.keypoint_id;
+                    voteIt = voteStorage.find(feature.img_id);
+                    if (voteIt != voteStorage.end()) {
+                        voteIt->second->push_back(vote);
+                    }
+                    featureIt++;
+                }
+            }
+            idsIdx++;
+        }
+    }
 }
 
-std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> keyPoints) {
-    
-    return std::vector<QueryItem>();
+std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> keyPoints, int amountWords) {
+
+    std::vector<QueryItem> queryResult;
+    QueryItem queryItem;
+    std::vector<featureVote> *voteTable;
+    int numMatch, imgId, imgFeatureNum, vote = vw->getVote(), featureNum = keyPoints.size();
+    float pp, prob;
+    auto it = voteStorage.begin();
+    while (it != voteStorage.end()) {
+        voteTable = it->second;
+        numMatch = voteTable->size();
+        if (numMatch >= MIN_MATCH) {
+            imgId = it->first;
+            imgFeatureNum = imageInfoStore[imgId].feature_num;
+            pp = std::min(vote * (float) imgFeatureNum / amountWords, 1.f);
+            prob = probDistribution(featureNum, numMatch, pp);
+
+            if (prob >= MIN_PROBABILITY) {
+                queryItem.imgId = imgId;
+                queryItem.amountMatched = numMatch;
+                queryItem.imgSize = imageInfoStore[imgId].img_size;
+                queryItem.probability = prob;
+                queryResult.push_back(queryItem);
+            }
+        }
+        it++;
+    }
+    std::sort(queryResult.begin(), queryResult.end(), [](const QueryItem &a, const QueryItem &b) -> bool {
+        return a.probability > b.probability;
+    });
+    return queryResult;
 }
 
 std::vector<QueryItem>
-Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size, int amountRes) {
-    return std::vector<QueryItem>();
+Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size,
+                               int amountRes) {
+
+    std::vector<QueryItem> queryResult;
+    QueryItem queryItem;
+    int sizePre = pre.size();
+    if (sizePre < 1)
+        return queryResult;
+
+    int imgId, numMatch, numFeatures = keyPoints.size(), count = 0;
+    std::vector<featureVote> *voteTable;
+    std::vector<cv::Point2f> q, r;
+    cv::Mat pose;
+    int thresholdDist = round(sqrt(DISTANTION_TOLERANCE * size.width * size.height / M_PI));
+    for (int i = 0; i < sizePre && count < amountRes; ++i) {
+        queryItem = pre[i];
+        imgId = queryItem.imgId;
+        numMatch = queryItem.amountMatched;
+
+        voteTable = voteStorage[imgId];
+        findPointPair(keyPoints, *voteTable, q, r);
+        pose = cv::findHomography(cv::Mat(r), cv::Mat(q), cv::RANSAC, thresholdDist);
+        std::vector<cv::Point2f> posePoint = CvUtils::affineTransformRect(imageInfoStore[imgId].img_size, pose);
+
+        if (CvUtils::proveRect(posePoint)) {
+            queryItem.pose = pose;
+            queryItem.objPose = posePoint;
+            queryResult.push_back(queryItem);
+            count++;
+        }
+
+        r.clear();
+        q.clear();
+    }
+
+    return queryResult;
 }
 
 void Recognition::clearVote() {
     auto it = voteStorage.begin();
-    while(it != voteStorage.end()){
+    while (it != voteStorage.end()) {
         it->second->clear();
+        it++;
+    }
+}
+
+float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
+    float prob = 0.f;
+    float logPp = log(pp);
+    float logNp = log(1.f - pp);
+    float tmp;
+    for (int i = 0; i <= numMatch; ++i) {
+        tmp = 0.f;
+        for (int j = 0; j < i; ++j) {
+            tmp += log(numFeatures - j) - log(j + 1);
+        }
+        tmp += logPp * i + logNp * (numFeatures - i);
+        prob += exp(tmp);
+        if (prob > 1) {
+            prob = 1;
+            break;
+        }
+    }
+    return prob;
+}
+
+void Recognition::findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable,
+                                std::vector<cv::Point2f> q, std::vector<cv::Point2f> r) {
+    auto it = voteTable.begin();
+    while (it != voteTable.end()) {
+        q.push_back(keyPoints[it->in_feat_i].pt);
+        r.push_back(keyPointStore[it->keypoint_id].pt);
         it++;
     }
 }

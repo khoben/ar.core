@@ -13,7 +13,7 @@
 //    SIFT
 //};
 
-struct QueryItem{
+struct QueryItem {
     int imgId;
     double probability;
     int amountMatched;
@@ -22,20 +22,20 @@ struct QueryItem{
     cv::Mat pose;
 };
 
-typedef struct{
+typedef struct {
     int in_feat_i;
     int keypoint_id;
-}featureVote;
+} featureVote;
 
-typedef struct{
+typedef struct {
     int keypoint_id;
     int img_id;
-}featureInfo;
+} featureInfo;
 
-typedef struct{
+typedef struct {
     int feature_num;
     cv::Size img_size;
-}imageInfo;
+} imageInfo;
 
 class Recognition {
 private:
@@ -43,34 +43,51 @@ private:
     BoVW *vw;
     int imageAmount;
     int featureAmount;
+    int MIN_MATCH = 6;
+    float MIN_PROBABILITY = 0.9f;
+    float DISTANTION_TOLERANCE = 5e-3;
+
     std::multimap<int, featureInfo> featureStore;
     std::map<int, cv::KeyPoint> keyPointStore;
     std::map<int, imageInfo> imageInfoStore;
-    std::map<int, std::vector<featureVote>*> voteStorage;
+    std::map<int, std::vector<featureVote> *> voteStorage;
 public:
     Recognition();
-    void createBagOfVisualWords(const std::vector<cv::Mat>& imgs, int numClusters = 0);
-    void extractFeatures(const cv::Mat& img, std::vector<cv::KeyPoint> keyPoints, cv::Mat& descriptor);
-    int addTrackImage(const cv::Mat& img, int id);
-    std::vector<QueryItem> queryImage(const cv::Mat& img, int amountRes = 1);
+
+    void createBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters = 0);
+
+    void extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> keyPoints, cv::Mat &descriptor);
+
+    int addTrackImage(const cv::Mat &img, int id);
+
+    std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
+
     ~Recognition();
 
-    int getFeatureIds(const cv::Mat& descriptor, std::vector<int>& ids);
-    int storeImageFeatures(int id, const cv::Size& size, std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids);
+    int getFeatureIds(const cv::Mat &descriptor, std::vector<int> &ids);
+
+    int storeImageFeatures(int id, const cv::Size &size, std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids);
 
     int getCandidateKpId();
 
     std::vector<QueryItem>
-    searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountRes);
+    searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountWords,
+                  int amountRes);
 
     void voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids);
 
-    std::vector<QueryItem> getMatchResults(std::vector<cv::KeyPoint> keyPoints);
+    std::vector<QueryItem> getMatchResults(std::vector<cv::KeyPoint> keyPoints, int amountWords);
 
     std::vector<QueryItem>
     filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size, int amountRes);
 
     void clearVote();
+
+    float probDistribution(int numFeatures, int numMatch, float pp);
+
+    void
+    findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable, std::vector<cv::Point2f> q,
+                  std::vector<cv::Point2f> r);
 };
 
 #endif // __RECOGNITION__
