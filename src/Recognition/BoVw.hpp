@@ -2,8 +2,8 @@
 #ifndef AR_CORE_BOVW_HPP
 #define AR_CORE_BOVW_HPP
 
-#include <opencv2/flann/flann.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 class BoVW {
 private:

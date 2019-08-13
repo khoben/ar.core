@@ -1,7 +1,8 @@
 #include "BoVw.hpp"
 
 BoVW::BoVW() {
-    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
+//    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
+    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,10,2));
     VOTE_NUM = 1;
     RADIUS = 0.2;
 }

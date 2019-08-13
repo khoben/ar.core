@@ -91,9 +91,17 @@ public:
                isRect(c, a, b, d);
     }
 
-    static bool proveRect(const std::vector<cv::Point2f> &pts) {
+    static bool proveRect(std::vector<cv::Point2f> &pts) {
         if (pts.size() != 4)
             return false;
+
+        const float eps = 1e-5;
+        for(cv::Point2f &i: pts){
+            if (fabs(i.x) < eps)
+                i.x = 0;
+            if (fabs(i.y) < eps)
+                i.y = 0;
+        }
 
         return isRectAnyOrder(pts[0], pts[1], pts[2], pts[3]);
     }

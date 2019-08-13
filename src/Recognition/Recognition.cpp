@@ -9,25 +9,26 @@ Recognition::Recognition() {
 }
 
 void Recognition::createBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters) {
+    std::vector<cv::KeyPoint> keyPoints;
+    cv::Mat descriptor;
     for (const auto &img: imgs) {
-        std::vector<cv::KeyPoint> keyPoints;
-        cv::Mat descriptor;
         extractFeatures(img, keyPoints, descriptor);
         vw->addFeatures(descriptor);
     }
     vw->create(numClusters);
 }
 
-void Recognition::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> keyPoints, cv::Mat &descriptor) {
+void Recognition::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint>& keyPoints, cv::Mat &descriptor) {
     featureDetector->detectAndCompute(img, cv::noArray(), keyPoints, descriptor);
 }
 
-int Recognition::addTrackImage(const cv::Mat &img, int id) {
+int Recognition::addTrackImage(const cv::Mat &img) {
     std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptor;
     extractFeatures(img, keyPoints, descriptor);
     std::vector<int> ids;
     getFeatureIds(descriptor, ids);
+    int id = imageAmount;
     int status = storeImageFeatures(id, img.size(), keyPoints, ids);
 
     if (status < 0) return -1;
@@ -167,7 +168,7 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
         if (numMatch >= MIN_MATCH) {
             imgId = it->first;
             imgFeatureNum = imageInfoStore[imgId].feature_num;
-            pp = std::min(vote * (float) imgFeatureNum / amountWords, 1.f);
+            pp = std::min((float)vote * imgFeatureNum / amountWords, 1.f);
             prob = probDistribution(featureNum, numMatch, pp);
 
             if (prob >= MIN_PROBABILITY) {
@@ -234,6 +235,8 @@ void Recognition::clearVote() {
 }
 
 float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
+    if (pp==1.0f)
+        return pp;
     float prob = 0.f;
     float logPp = log(pp);
     float logNp = log(1.f - pp);
@@ -254,7 +257,7 @@ float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
 }
 
 void Recognition::findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable,
-                                std::vector<cv::Point2f> q, std::vector<cv::Point2f> r) {
+                                std::vector<cv::Point2f>& q, std::vector<cv::Point2f>& r) {
     auto it = voteTable.begin();
     while (it != voteTable.end()) {
         q.push_back(keyPoints[it->in_feat_i].pt);

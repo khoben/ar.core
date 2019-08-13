@@ -12,8 +12,9 @@ private:
     Recognition *recognitionInstance;
 public:
     AR();
-    int processFrame(cv::Mat frame);
-    int addToTrack(std::vector<cv::Mat> imgs);
+    int process(cv::Mat frame);
+    int add(std::vector<cv::Mat> imgs);
+    int add(cv::Mat img);
     ~AR();
 };
 
