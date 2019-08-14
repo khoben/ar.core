@@ -74,6 +74,18 @@ public:
                                          });
     }
 
+    static bool _ptsInsideFrame(const cv::Size &img_size, std::vector<cv::Point2f> &pts) {
+        auto itr = pts.begin();
+        while (itr != pts.end()) {
+            if (itr->x < 0 || itr->x >= img_size.width || itr->y < 0 || itr->y >= img_size.height) {
+                return false;
+            } else {
+                itr++;
+            }
+        }
+        return true;
+    }
+
     static bool isOrthogonal(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c) {
         return ((b.x - a.x) * (b.x - c.x) +
                 (b.y - a.y) * (b.y - c.y)) == 0;
@@ -96,7 +108,7 @@ public:
             return false;
 
         const float eps = 1e-5;
-        for(cv::Point2f &i: pts){
+        for (cv::Point2f &i: pts) {
             if (fabs(i.x) < eps)
                 i.x = 0;
             if (fabs(i.y) < eps)
@@ -106,9 +118,8 @@ public:
         return isRectAnyOrder(pts[0], pts[1], pts[2], pts[3]);
     }
 
-    static bool _proveRect(std::vector<cv::Point2f>& rect_pts)
-    {
-        CV_Assert(rect_pts.size()==4);
+    static bool _proveRect(std::vector<cv::Point2f> &rect_pts) {
+        CV_Assert(rect_pts.size() == 4);
 
         bool result_f = true;
         float vec[4][2];
@@ -125,21 +136,14 @@ public:
 
         int s;
         float val = vec[3][0] * vec[0][1] - vec[3][1] * vec[0][0];
-        if(val > 0)
+        if (val > 0)
             s = 1;
         else
             s = -1;
 
-//	if(vec[3][0] * vec[0][0] + vec[3][1] * vec[0][1] >= 0)
-//		result_f = false;
-
-        for(i=0; i<3; i++){
-//		if(vec[i][0] * vec[i+1][0] + vec[i][1] * vec[i+1][1] >= 0){
-//			result_f = false;
-//			break;
-//		}
-            val = vec[i][0] * vec[i+1][1] - vec[i][1] * vec[i+1][0];
-            if( val * s <= 0){
+        for (i = 0; i < 3; i++) {
+            val = vec[i][0] * vec[i + 1][1] - vec[i][1] * vec[i + 1][0];
+            if (val * s <= 0) {
                 result_f = false;
                 break;
             }
@@ -239,6 +243,68 @@ public:
         return count;
     }
 
+    static int _amountGoodPtInsideRect(std::vector<cv::Point2f> &points, std::vector<cv::Point2f> &corner_pts,
+                                       std::vector<unsigned char> &status) {
+        CV_Assert(corner_pts.size() == 4);
+        CV_Assert(points.size() == status.size());
+
+        // ax+by+c=0
+        float a[4];
+        float b[4];
+        float c[4];
+
+        a[0] = corner_pts[3].y - corner_pts[0].y;
+        a[1] = corner_pts[2].y - corner_pts[1].y;
+        a[2] = corner_pts[1].y - corner_pts[0].y;
+        a[3] = corner_pts[2].y - corner_pts[3].y;
+
+        b[0] = corner_pts[0].x - corner_pts[3].x;
+        b[1] = corner_pts[1].x - corner_pts[2].x;
+        b[2] = corner_pts[0].x - corner_pts[1].x;
+        b[3] = corner_pts[3].x - corner_pts[2].x;
+
+        c[0] = corner_pts[0].y * corner_pts[3].x - corner_pts[3].y * corner_pts[0].x;
+        c[1] = corner_pts[1].y * corner_pts[2].x - corner_pts[2].y * corner_pts[1].x;
+        c[2] = corner_pts[0].y * corner_pts[1].x - corner_pts[1].y * corner_pts[0].x;
+        c[3] = corner_pts[3].y * corner_pts[2].x - corner_pts[2].y * corner_pts[3].x;
+
+        float max_x, min_x, max_y, min_y;
+        max_x = corner_pts[0].x;
+        min_x = corner_pts[0].x;
+        max_y = corner_pts[0].y;
+        min_y = corner_pts[0].y;
+
+        int i;
+        for (i = 1; i < 4; i++) {
+            if (corner_pts[i].x > max_x)
+                max_x = corner_pts[i].x;
+            if (corner_pts[i].x < min_x)
+                min_x = corner_pts[i].x;
+            if (corner_pts[i].y > max_y)
+                max_y = corner_pts[i].y;
+            if (corner_pts[i].y < min_y)
+                min_y = corner_pts[i].y;
+        }
+
+        float val[4];
+        int size = points.size();
+        int count = 0;
+        for (int j = 0; j < size; j++) {
+            if (status[j] > 0) {
+                for (i = 0; i < 4; i++) {
+                    val[i] = a[i] * points[j].x + b[i] * points[j].y + c[i];
+                }
+                if (val[0] * val[1] <= 0 && val[2] * val[3] <= 0) {
+                    count++;
+                } else {
+                    status[j] = 0;
+                }
+            }
+        }
+
+        return count;
+    }
+
     static std::vector<cv::Point2f> affineTransformRect(cv::Size size, cv::Mat mat) {
         std::vector<cv::Point2f> points;
         float width = (float) (size.width) - 1;
@@ -253,6 +319,17 @@ public:
         }
 
         return points;
+    }
+
+    static std::vector<cv::Point2f> scalePoints(std::vector<cv::Point2f> &point_vec, double scale) {
+        std::vector<cv::Point2f> ret_vec;
+
+        auto itr = point_vec.begin();
+        while (itr != point_vec.end()) {
+            ret_vec.push_back(*itr * scale);
+            itr++;
+        }
+        return ret_vec;
     }
 };
 

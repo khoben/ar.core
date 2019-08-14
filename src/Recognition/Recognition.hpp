@@ -60,11 +60,14 @@ public:
     int addTrackImage(const cv::Mat &img);
 
     std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
+
     float probDistribution(int numFeatures, int numMatch, float pp);
+
     ~Recognition();
 
 private:
-    void extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint>& keyPoints, cv::Mat &descriptor);
+    void extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor);
+
     int getFeatureIds(const cv::Mat &descriptor, std::vector<int> &ids);
 
     int storeImageFeatures(int id, const cv::Size &size, std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids);
@@ -85,8 +88,8 @@ private:
     void clearVote();
 
     void
-    findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable, std::vector<cv::Point2f>& q,
-                  std::vector<cv::Point2f>& r);
+    findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable, std::vector<cv::Point2f> &q,
+                  std::vector<cv::Point2f> &r);
 };
 
 #endif // __RECOGNITION__

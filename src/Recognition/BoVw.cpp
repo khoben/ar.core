@@ -2,11 +2,11 @@
 
 BoVW::BoVW() {
 //    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
-    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20,10,2));
+    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20, 10, 2));
 //    descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
     VOTE_NUM = 1;
 //    RADIUS = 0.2;
-    RADIUS = 0.99f;
+    RADIUS = 0.9f;
 }
 
 void BoVW::addFeatures(const cv::Mat &feature) {
@@ -40,7 +40,7 @@ cv::Mat BoVW::search(const cv::Mat &feature) {
         for (int j = 0; j < VOTE_NUM; ++j) {
             cv::DMatch matchM = matchId[i][0];
             cv::DMatch matchN = matchId[i][1];
-            if (matchM.distance >= RADIUS * matchN.distance) {
+            if (matchM.distance >= matchN.distance * RADIUS) {
                 id.at<int>(i, j) = -1;
             } else {
                 id.at<int>(i, j) = matchM.trainIdx;

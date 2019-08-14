@@ -4,82 +4,84 @@
 
 using namespace cv;
 
-float calcIntegBinDistribution(int in_feats_num, int match_num, float Pp)
-{
-    float prob = 0;
-//	float Np = 1.0 - Pp;
-    float tmp1;
-    float logPp = log(Pp);
-    float logNp = log((float)1.0 - Pp);
-    int i,j;
+AR *ar;
 
-    for(i=0;i<=match_num;i++){
-        tmp1 = 0;
-        for(j=0;j<i;j++){
-            tmp1 += (float)log((double)(in_feats_num - j));
-            tmp1 -= (float)log((double)(j+1));
-        }
-        tmp1 += logPp*i;
-        tmp1 += logNp*(in_feats_num-i);
-        prob += exp(tmp1);
-        if(prob > 1){
-            prob = 1;
-            break;
-        }
+const int maxFrameSize = 480;
+
+cv::Mat makeQueryMat(cv::Size size, int max_size, int &scale) {
+    int frame_max_size = std::max(size.width, size.height);
+    scale = 1;
+    while ((frame_max_size / scale) > max_size) {
+        scale *= 2;
     }
-
-    return prob;
+    return cv::Mat(size.height / scale, size.width / scale, CV_8UC1);
 }
 
-int main(int, char**)
-{
-//    VideoCapture cap(0); // open the default camera
-//    if(!cap.isOpened())  // check if we succeeded
-//        return -1;
+int start() {
+    cv::VideoCapture videoCapture;
+    videoCapture.open(0);
+    if (!videoCapture.isOpened()) {
+        std::cout << "Failed to Open Camera" << std::endl;
+        return -1;
+    }
+    cv::Mat frame, gray, query;
+    videoCapture >> frame;
+    int scale = 1;
+    query = makeQueryMat(frame.size(), maxFrameSize, scale);
 
-    AR* ar = new AR();
+    bool isTracked = false;
+    for (;;) {
+        videoCapture >> frame;
+        if (frame.empty()) break;
+        cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+        if (isTracked) {
+            std::cout << "Continue.." << std::endl;
+            isTracked = ar->keepTracking(gray);
+        } else {
+            cv::resize(gray, query, query.size());
+            std::vector<QueryItem> result = ar->process(query);
+            if (!result.empty()) {
+                std::vector<cv::Point2f> objPose;
+                QueryItem r = result[0];
+
+                std::cout << "Matched: img_id:" << r.imgId << std::endl;
+                objPose = r.objPose;
+                objPose = CvUtils::scalePoints(objPose, scale);
+                std::cout << "Pose: " << objPose << " probability: " << r.probability << std::endl;
+                ar->startTracking(gray, objPose);
+                isTracked = true;
+            }
+        }
+        if (isTracked) {
+            cv::Scalar val(255);
+            ObjectPosition objPose = ar->getTrackingInstance()->objectPosition;
+            cv::line(frame, objPose[3], objPose[0], val);
+            for (int i = 0; i < 3; i++) {
+                line(frame, objPose[i], objPose[i + 1], val);
+            }
+        }
+        cv::imshow("AR", frame);
+        if (waitKey(1) == 27) break; //quit on ESC button
+    }
+
+
+    return 0;
+}
+
+int main(int, char **) {
+    // init AR instance
+    ar = new AR();
+    // load marker images
     cv::Mat mat = cv::imread(R"(..\resources\marker\miku.jpg)", 0);
     cv::Mat mat_1 = cv::imread(R"(..\resources\marker\czech.jpg)", 0);
-    cv::Mat mat_2 = cv::imread("..\\resources\\4.jpg", 0);
+    cv::Mat mat_2 = cv::imread("..\\resources\\1.jpg", 0);
     ar->add(std::vector<cv::Mat>{
-        mat,
-        mat_1
+            mat,
+            mat_1
     });
-    ar->process(mat_2);
 
-
-//    cv::Mat grayImg;
-//
-//    Mat frame;
-//    cap >> frame;
-//    cv::Size frame_size = frame.size();
-//
-//    cv::Mat query_image;
-//    int frame_max_size;
-//    if(frame_size.width > frame_size.height){
-//        frame_max_size = frame_size.width;
-//    }
-//    else{
-//        frame_max_size = frame_size.height;
-//    }
-//    int query_scale = 1;
-//    int max_query_size = 320;
-//    while((frame_max_size / query_scale) > max_query_size){
-//        query_scale*=2;
-//    }
-//    query_image.create(frame_size.height/query_scale, frame_size.width/query_scale, CV_8UC1);
-//
-////    ar->process(mat_1);
-//
-//    for(;;)
-//    {
-//        cap >> frame; // get a new frame from camera
-//        cv::imshow("AR", frame);
-//        cv::cvtColor(frame, grayImg, COLOR_BGR2GRAY);
-//        cv::resize(grayImg, query_image, query_image.size());
-//        ar->process(frame);
-//        if(waitKey(30) >= 0) break;
-//    }
+    // start AR process
+    start();
 
     return 0;
 }

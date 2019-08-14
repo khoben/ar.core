@@ -8,34 +8,14 @@ AR::AR() {
 }
 
 
+std::vector<QueryItem> AR::process(cv::Mat frame) {
+    return recognitionInstance->queryImage(frame, 10);
 
-int AR::process(cv::Mat frame) {
-    auto result = recognitionInstance->queryImage(frame, 10);
-    if (!result.empty()){
-
-        std::vector<cv::Point2f> objPose;
-        for (auto r: result) {
-            std::cout << "Match: img_id:" << r.imgId << std::endl;
-            std::cout << "Pose" << r.objPose << r.probability << std::endl;
-            objPose = r.objPose;
-            cv::Scalar val(255);
-            cv::line(frame, objPose[3], objPose[0], val);
-            for (int i = 0; i < 3; i++) {
-                line(frame, objPose[i], objPose[i + 1], val);
-            }
-        }
-        namedWindow("result",cv::WINDOW_AUTOSIZE);
-        imshow("result", frame);
-        cv::waitKey(0);
-    }else{
-//        std::cout << "No match" << std::endl;
-    }
-    return 0;
 }
 
 int AR::add(std::vector<cv::Mat> imgs) {
     recognitionInstance->createBagOfVisualWords(imgs);
-    for(const auto& img: imgs) {
+    for (const auto &img: imgs) {
         recognitionInstance->addTrackImage(img);
     }
     return 0;
@@ -44,4 +24,14 @@ int AR::add(std::vector<cv::Mat> imgs) {
 int AR::add(cv::Mat img) {
     return add(std::vector<cv::Mat>{img});
 }
+
+bool AR::keepTracking(const cv::Mat &frame) {
+    return trackingInstance->keepTracking(frame);
+}
+
+bool AR::startTracking(const cv::Mat &frame, const ObjectPosition &pose) {
+    trackingInstance->start(frame, pose);
+    return true;
+}
+
 

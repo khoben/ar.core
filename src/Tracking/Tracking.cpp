@@ -1,7 +1,8 @@
+#include <iostream>
 #include "Tracking.hpp"
 
 Tracking::Tracking() {
-    maxAmountCorners = 75;
+    maxAmountCorners = 80;
     minQualityCorners = .1;
     minDistanceCorners = 5;
     MIN_FEATURE_POINTS = 6;
@@ -28,28 +29,42 @@ bool Tracking::keepTracking(const cv::Mat &frame) {
 
     // check track status
     int found = std::count(opticalFlowStatus.begin(), opticalFlowStatus.end(), 1);
-
+    std::cout << "found: " << found << std::endl;
     // enough tracking points
     if (found < MIN_FEATURE_POINTS) {
         return false;
     } else {
-        homography = cv::findHomography(cv::Mat(corners), cv::Mat(nextCorners), opticalFlowStatus, cv::RANSAC, 5);
+        homography = cv::findHomography(cv::Mat(corners), cv::Mat(nextCorners), opticalFlowStatus, cv::RANSAC, 2.5);
         if (cv::countNonZero(homography) == 0) {
+            std::cout << "Zero homo" << std::endl;
             return false;
         } else {
             // calc object position
-            std::vector<cv::Point2f> nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
+//            std::vector<cv::Point2f> nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
+            std::vector<cv::Point2f> nextObjPos;
+            cv::perspectiveTransform(objectPosition, nextObjPos, homography);
             cv::Size size = prevFrame.size();
-            // True if points outside frame
-            if (CvUtils::ptsInsideFrame(size, nextObjPos)) return false;
-            // True if that`s rect
-            if (!CvUtils::proveRect(nextObjPos)) return false;
-            if (nextCorners.size() != opticalFlowStatus.size()) return false;
-
-            int featurePtInsideRect = CvUtils::amountGoodPtInsideRect(nextCorners, nextObjPos, opticalFlowStatus);
-
-            if (featurePtInsideRect < MIN_FEATURE_POINTS)
+            // True if points inside frame
+            if (CvUtils::_ptsInsideFrame(size, nextObjPos)) {
+                std::cout << "pts inside" << std::endl;
                 return false;
+            }
+            // True if that`s rect
+            if (!CvUtils::_proveRect(nextObjPos)) {
+                std::cout << "not a rect" << std::endl;
+                return false;
+            }
+            if (nextCorners.size() != opticalFlowStatus.size()) {
+                std::cout << "flow error" << std::endl;
+                return false;
+            }
+
+            int featurePtInsideRect = CvUtils::_amountGoodPtInsideRect(nextCorners, nextObjPos, opticalFlowStatus);
+
+            if (featurePtInsideRect < MIN_FEATURE_POINTS) {
+                std::cout << "not enough points" << std::endl;
+                return false;
+            }
 
             frame.copyTo(prevFrame);
             corners = nextCorners;

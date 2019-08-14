@@ -4,7 +4,7 @@ Recognition::Recognition() {
     //TODO: init detector and descriptor
     vw = new BoVW();
     featureDetector = cv::AKAZE::create();
-//    featureDetector = cv::xfeatures2d::SIFT::create();
+//    featureDetector = cv::xfeatures2d::SURF::create();
     imageAmount = 0;
     featureAmount = 0;
 }
@@ -19,7 +19,7 @@ void Recognition::createBagOfVisualWords(const std::vector<cv::Mat> &imgs, int n
     vw->create(numClusters);
 }
 
-void Recognition::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint>& keyPoints, cv::Mat &descriptor) {
+void Recognition::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor) {
     featureDetector->detectAndCompute(img, cv::noArray(), keyPoints, descriptor);
 }
 
@@ -169,7 +169,7 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
         if (numMatch >= MIN_MATCH) {
             imgId = it->first;
             imgFeatureNum = imageInfoStore[imgId].feature_num;
-            pp = std::min((float)vote * imgFeatureNum / amountWords, 1.f);
+            pp = std::min((float) vote * imgFeatureNum / amountWords, 1.f);
             prob = probDistribution(featureNum, numMatch, pp);
 
             if (prob >= MIN_PROBABILITY) {
@@ -237,7 +237,7 @@ void Recognition::clearVote() {
 
 float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
     float prob = 0.f;
-    float logPp = log(1.f - pp);
+    float logPp = log(1 - pp);
     float logNp = log(pp);
     float tmp;
     for (int i = 0; i <= numMatch; ++i) {
@@ -256,7 +256,7 @@ float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
 }
 
 void Recognition::findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable,
-                                std::vector<cv::Point2f>& q, std::vector<cv::Point2f>& r) {
+                                std::vector<cv::Point2f> &q, std::vector<cv::Point2f> &r) {
     auto it = voteTable.begin();
     while (it != voteTable.end()) {
         q.push_back(keyPoints[it->in_feat_i].pt);

@@ -12,9 +12,19 @@ private:
     Recognition *recognitionInstance;
 public:
     AR();
-    int process(cv::Mat frame);
+
+    std::vector<QueryItem> process(cv::Mat frame);
+
+    bool startTracking(const cv::Mat &frame, const ObjectPosition &pose);
+
+    bool keepTracking(const cv::Mat &frame);
+
+    Tracking *getTrackingInstance() { return trackingInstance; }
+
     int add(std::vector<cv::Mat> imgs);
+
     int add(cv::Mat img);
+
     ~AR();
 };
 
