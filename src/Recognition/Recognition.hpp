@@ -4,9 +4,8 @@
 #define __RECOGNITION__
 
 #include <opencv2/features2d/features2d.hpp>
-#include <opencv2/xfeatures2d/nonfree.hpp>
-#include "src/Utils/CvUtils.hpp"
-#include "src/Recognition/BoVw.hpp"
+#include "../Utils/CvUtils.hpp"
+#include "BoVw.hpp"
 #include <map>
 
 //enum AlgorithmType{
@@ -55,7 +54,9 @@ private:
 public:
     Recognition();
 
-    void createBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters = 0);
+    void addAndCreateBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters = 0);
+    void addVisualWord(const cv::Mat& img);
+    void createBagOfVisualWords(int numClusters = 0);
 
     int addTrackImage(const cv::Mat &img);
 

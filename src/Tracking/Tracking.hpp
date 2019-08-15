@@ -8,7 +8,7 @@
 #include <opencv2/calib3d/calib3d.hpp>
 #include <vector>
 #include <algorithm>
-#include "src/Utils/CvUtils.hpp"
+#include "../Utils/CvUtils.hpp"
 
 class Tracking {
 public:

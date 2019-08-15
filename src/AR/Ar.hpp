@@ -3,8 +3,8 @@
 #ifndef AR_CORE_AR_HPP
 #define AR_CORE_AR_HPP
 
-#include "src/Tracking/Tracking.hpp"
-#include "src/Recognition/Recognition.hpp"
+#include "../Tracking/Tracking.hpp"
+#include "../Recognition/Recognition.hpp"
 
 class AR {
 private:
@@ -21,9 +21,10 @@ public:
 
     Tracking *getTrackingInstance() { return trackingInstance; }
 
-    int add(std::vector<cv::Mat> imgs);
+    int addAndCreate(std::vector<cv::Mat> imgs);
 
     int add(cv::Mat img);
+    int create();
 
     ~AR();
 };

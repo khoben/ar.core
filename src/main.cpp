@@ -1,6 +1,6 @@
 #include "opencv2/opencv.hpp"
-#include "src/AR/Ar.hpp"
-#include "src/Utils/CvUtils.hpp"
+#include "AR/Ar.hpp"
+#include "Utils/CvUtils.hpp"
 
 using namespace cv;
 
@@ -35,7 +35,7 @@ int start() {
         if (frame.empty()) break;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
         if (isTracked) {
-            std::cout << "Continue.." << std::endl;
+            std::cout << "Continue.. " << std::endl;
             isTracked = ar->keepTracking(gray);
         } else {
             cv::resize(gray, query, query.size());
@@ -75,10 +75,13 @@ int main(int, char **) {
     cv::Mat mat = cv::imread(R"(..\resources\marker\miku.jpg)", 0);
     cv::Mat mat_1 = cv::imread(R"(..\resources\marker\czech.jpg)", 0);
     cv::Mat mat_2 = cv::imread("..\\resources\\1.jpg", 0);
-    ar->add(std::vector<cv::Mat>{
-            mat,
-            mat_1
-    });
+//    ar->addAndCreate(std::vector<cv::Mat>{
+//            mat_1,
+//            mat
+//    });
+    ar->add(mat);
+    ar->add(mat_1);
+    ar->create();
 
     // start AR process
     start();

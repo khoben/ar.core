@@ -9,13 +9,24 @@ Recognition::Recognition() {
     featureAmount = 0;
 }
 
-void Recognition::createBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters) {
+void Recognition::addAndCreateBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters) {
     std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptor;
     for (const auto &img: imgs) {
         extractFeatures(img, keyPoints, descriptor);
         vw->addFeatures(descriptor);
     }
+    vw->create(numClusters);
+}
+
+void Recognition::addVisualWord(const cv::Mat &img) {
+    std::vector<cv::KeyPoint> keyPoints;
+    cv::Mat descriptor;
+    extractFeatures(img, keyPoints, descriptor);
+    vw->addFeatures(descriptor);
+}
+
+void Recognition::createBagOfVisualWords(int numClusters) {
     vw->create(numClusters);
 }
 
@@ -236,9 +247,11 @@ void Recognition::clearVote() {
 }
 
 float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
+    if (pp == 1)
+        return pp;
     float prob = 0.f;
-    float logPp = log(1 - pp);
-    float logNp = log(pp);
+    float logPp = static_cast<float>(log(1 - pp));
+    float logNp = static_cast<float>(log(pp));
     float tmp;
     for (int i = 0; i <= numMatch; ++i) {
         tmp = 0.f;
