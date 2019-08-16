@@ -118,7 +118,7 @@ int main(int, char **) {
     // init AR instance
     ar = new AR();
     // load marker images
-    cv::Mat mat_1 = cv::imread(R"(..\resources\marker\307.png)", 0);
+    cv::Mat mat_1 = cv::imread(R"(..\resources\marker\miku.jpg)", 0);
     cv::Mat mat_3 = cv::imread(R"(..\resources\marker\314.png)", 0);
     cv::Mat mat_2 = cv::imread("..\\resources\\1.jpg");
 //    ar->addAndCreate(std::vector<cv::Mat>{
