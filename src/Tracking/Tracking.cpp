@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 Tracking::Tracking() {
-    maxAmountCorners = 80;
+    maxAmountCorners = 60;
     minQualityCorners = .1;
     minDistanceCorners = 5;
     MIN_FEATURE_POINTS = 6;

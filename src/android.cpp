@@ -3,8 +3,9 @@
 AR *ar;
 Mat query;
 int scale = 1;
-const int maxFrameSize = 480;
+const int maxFrameSize = 600;
 bool isTracked = false;
+int trackedId = -1;
 
 cv::Mat makeQueryMat(cv::Size size, int max_size, int &scale) {
     int frame_max_size = std::max(size.width, size.height);
@@ -54,7 +55,7 @@ int process(Mat frame, Mat& out) {
         if (!result.empty()) {
             std::vector<cv::Point2f> objPose;
             QueryItem r = result[0];
-
+            trackedId = r.imgId;
             LOGD("MATCHED: IMG_ID: %d\n", r.imgId);
             std::cout << "Matched: img_id:" << r.imgId << std::endl;
             objPose = r.objPose;
@@ -72,6 +73,9 @@ int process(Mat frame, Mat& out) {
         for (int i = 0; i < 3; i++) {
             line(out, objPose[i], objPose[i + 1], val, 3);
         }
+        cv::Point center((objPose[0] + objPose[2])/2);
+
+        cv::putText(out, std::to_string(trackedId), center, FONT_HERSHEY_TRIPLEX, 6, val, 3);
     }
 
     return 0;

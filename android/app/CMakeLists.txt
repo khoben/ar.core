@@ -3,11 +3,11 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.6)
 
 
-SET(OpenCV_DIR D:/Android/OpenCV31/sdk/native/jni)
-#SET(OpenCV_DIR D:/Android/OpenCV41/sdk/native/jni)
+#SET(OpenCV_DIR D:/Android/OpenCV31/sdk/native/jni)
+SET(OpenCV_DIR D:/Android/OpenCV-android-sdk/sdk/native/jni)
 find_package(OpenCV REQUIRED)
 message(STATUS "opencv found: ${OpenCV_LIBS}")
 

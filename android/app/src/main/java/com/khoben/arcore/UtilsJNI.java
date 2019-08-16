@@ -32,7 +32,7 @@ public class UtilsJNI {
     {
         Mat mat = null;
         try {
-            mat = Utils.loadResource(context, idDrawable, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+            mat = Utils.loadResource(context, idDrawable, Imgcodecs.IMREAD_GRAYSCALE);
 //            Imgproc.cvtColor(mat, mat, COLOR_RGB2BGR);
         } catch (IOException e) {
             e.printStackTrace();

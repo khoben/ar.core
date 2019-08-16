@@ -44,8 +44,8 @@ private:
     int imageAmount;
     int featureAmount;
     int MIN_MATCH = 6;
-    float MIN_PROBABILITY = 0.75f;
-    float DISTANTION_TOLERANCE = 5e-3;
+    float MIN_PROBABILITY = 0.65f;
+    float DISTANTION_TOLERANCE = 5e-4;
 
     std::multimap<int, featureInfo> featureStore;
     std::map<int, cv::KeyPoint> keyPointStore;

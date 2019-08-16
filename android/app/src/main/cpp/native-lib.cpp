@@ -75,7 +75,7 @@ Java_com_khoben_arcore_OpenCVJNI_createMarkerDB(JNIEnv *env, jclass type) {
 
 int toGray(Mat img, Mat& gray)
 {
-    cvtColor(img, gray, CV_RGBA2GRAY); // Assuming RGBA input
+    cvtColor(img, gray, COLOR_RGBA2GRAY); // Assuming RGBA input
 
     if (gray.rows == img.rows && gray.cols == img.cols)
     {

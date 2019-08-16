@@ -2,8 +2,8 @@
 
 BoVW::BoVW() {
 //    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
-    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20, 10, 2));
-//    descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
+//    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20, 10, 2));
+    descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
     VOTE_NUM = 1;
 //    RADIUS = 0.2;
     RADIUS = 0.9f;

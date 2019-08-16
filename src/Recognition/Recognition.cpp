@@ -250,8 +250,8 @@ float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
     if (pp == 1)
         return pp;
     float prob = 0.f;
-    float logPp = static_cast<float>(log(1 - pp));
-    float logNp = static_cast<float>(log(pp));
+    float logPp = log(pp);
+    float logNp = log(1 - pp);
     float tmp;
     for (int i = 0; i <= numMatch; ++i) {
         tmp = 0.f;
