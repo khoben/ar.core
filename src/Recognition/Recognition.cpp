@@ -3,7 +3,7 @@
 Recognition::Recognition() {
     //TODO: init detector and descriptor
     vw = new BoVW();
-    featureDetector = cv::BRISK::create();
+    featureDetector = cv::AKAZE::create();
 //    featureDetector = cv::xfeatures2d::SURF::create();
     imageAmount = 0;
     featureAmount = 0;
