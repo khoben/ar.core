@@ -1,0 +1,97 @@
+@startuml
+
+class AR{
+    -Tracking *trackingInstance
+    -Recognition *recognitionInstance
+    +std::vector<QueryItem> process(cv::Mat frame)
+    +void startTracking(const cv::Mat &frame, const ObjectPosition &pose)
+    +bool keepTracking(const cv::Mat &frame)
+    +Tracking *getTrackingInstance()
+    +int addAndCreate(std::vector<cv::Mat> imgs)
+    +int add(cv::Mat img)
+    +int create()
+}
+class FeatureDB{
+    -cv::Ptr<cv::DescriptorMatcher> descriptorMatcher
+    -float RADIUS
+    -const int KNN_SIZE
+    +void addFeatures(const cv::Mat &feature)
+    +void create(int amountCluster)
+    +void clear()
+    +cv::Mat search(const cv::Mat &feature)
+    +int size() const
+}
+class Recognition{
+    -cv::Ptr<cv::FeatureDetector> featureDetector
+    -FeatureDB *vw
+    -int imageAmount
+    -int featureAmount
+    -int MIN_MATCH
+    -float MIN_PROBABILITY
+    -float DISTANTION_TOLERANCE
+    -std::multimap<int, FeatureInfo> featureStore
+    -std::map<int, cv::KeyPoint> keyPointStore
+    -std::map<int, ImageInfo> imageInfoStore
+    -std::map<int, std::vector<FeatureVote> *> voteStorage
+    +void addAndCreateBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters)
+    +void addVisualWord(const cv::Mat &img)
+    +void createBagOfVisualWords(int numClusters)
+    +int addTrackImage(const cv::Mat &img)
+    +std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes)
+    +float probDistribution(int numFeatures, int numMatch, float pp)
+    -void extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints,
+     cv::Mat &descriptor)
+    -int getFeatureIds(const cv::Mat &descriptor, std::vector<int> &ids)
+    -int storeImageFeatures(int id, const cv::Size &size, std::vector<cv::KeyPoint> keyPoints,
+     std::vector<int> ids)
+    -int getCandidateKpId()
+    -std::vector<QueryItem> searchImageId(std::vector<cv::KeyPoint> keyPoints,
+     std::vector<int> ids, cv::Size size, int amountWords, int amountRes)
+    -void voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids)
+    -void clearVote()
+    -std::vector<QueryItem> getMatchResults(std::vector<cv::KeyPoint> keyPoints,
+     int amountWords)
+    -std::vector<QueryItem>filterGeomResults(std::vector<cv::KeyPoint> keyPoints,
+     std::vector<QueryItem> pre, cv::Size size, int amountRes)
+    -void findPointPair(std::vector<cv::KeyPoint> keyPoints,
+     std::vector<FeatureVote> voteTable, std::vector<cv::Point2f> &q, std::vector<cv::Point2f> &r)
+
+}
+class Tracking{
+    +ObjectPosition objectPosition
+    +std::vector<cv::Point2f> corners
+    -cv::Mat prevFrame
+    -cv::Mat homography
+    -int MIN_FEATURE_POINTS
+    -int maxAmountCorners
+    -double minQualityCorners
+    -double minDistanceCorners
+    -std::vector<uchar> opticalFlowStatus
+    +{static}Tracking *create()
+    +void start(const cv::Mat &frame, const ObjectPosition &pos)
+    +bool keepTracking(const cv::Mat &frame)
+    +cv::Mat getHomography()
+}
+class CvUtils{
+    +{static}cv::Mat createMask(cv::Size size, const ObjectPosition &pose)
+    +{static}cv::Mat pointsToMat(const ObjectPosition &v)
+    +{static}template <typename T, typename F> static std::vector<T> convertVecType(const std::vector<F> &v)
+    +{static}bool ptsInsideFrame(const cv::Size &size, const std::vector<cv::Point2f> &pts)
+    +{static}bool _ptsInsideFrame(const cv::Size &size, const std::vector<cv::Point2f> &pts)
+    +{static}bool proveRect(std::vector<cv::Point2f> &pts)
+    +{static}bool _proveRect(std::vector<cv::Point2f> &pts)
+    +{static}bool isInsideRect(const std::vector<cv::Point2f> &rect, const cv::Point2f &pt)
+    +{static}int _amountGoodPtInsideRect(std::vector<cv::Point2f> &points, std::vector<cv::Point2f> &corner_pts,
+                                                    std::vector<unsigned char> &status)
+    +{static}std::vector<cv::Point2f> calcObjPos(const ObjectPosition &pos, cv::Mat &homo)
+    +{static}std::vector<cv::Point2f> transformMarkerCoordToObjectCoord(cv::Size size, cv::Mat mat)
+    +{static}std::vector<cv::Point2f> scalePoints(std::vector<cv::Point2f> &point_vec, double scale)
+}
+
+AR "1" --> "1" Recognition
+AR "1" --> "1" Tracking
+Recognition "1" --> "1" FeatureDB
+Recognition "<use>" ..> CvUtils
+Tracking "<use>" ..> CvUtils
+
+@enduml
