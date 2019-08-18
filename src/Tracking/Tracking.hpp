@@ -10,18 +10,23 @@
 #include <algorithm>
 #include "../Utils/CvUtils.hpp"
 
-class Tracking {
+/**
+ * @brief Class provides KLT tracking
+ * 
+ */
+class Tracking
+{
 public:
-    ObjectPosition objectPosition; // coords of object`s corners
+    ObjectPosition objectPosition;    // coords of object`s corners
     std::vector<cv::Point2f> corners; // corners
 private:
-    cv::Mat prevFrame;             // processed frame
-    cv::Mat homography;            // homography
-    int MIN_FEATURE_POINTS;          // min amount of founded feature points
+    cv::Mat prevFrame;      // processed frame
+    cv::Mat homography;     // homography
+    int MIN_FEATURE_POINTS; // min amount of founded feature points
     /* Corner detector props */
-    int maxAmountCorners;           // maximum amount of corners
-    double minQualityCorners;       // minimum quality of corners
-    double minDistanceCorners;      // minimum distance of corners
+    int maxAmountCorners;      // maximum amount of corners
+    double minQualityCorners;  // minimum quality of corners
+    double minDistanceCorners; // minimum distance of corners
     /* ------------------- */
 
     /* calcOpticalFlowPyrLK props */
@@ -54,6 +59,11 @@ public:
      */
     bool keepTracking(const cv::Mat &frame);
 
+    /**
+     * @brief Get the Homography matrix
+     * 
+     * @return cv::Mat Homography matrix
+     */
     cv::Mat getHomography() { return homography; }
 
     ~Tracking();

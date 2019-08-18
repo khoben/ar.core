@@ -13,7 +13,56 @@
 // [3]:Top-Right
 typedef std::vector<cv::Point2f> ObjectPosition;
 
-class CvUtils {
+/**
+ * @brief Store query results
+ * 
+ */
+struct QueryItem
+{
+    int imgId;                        // id of marker
+    cv::Size imgSize;                 // size of image
+    double probability;               // match probability
+    int amountMatched;                // amount feature matches
+    std::vector<cv::Point2f> objPose; // position of object
+    cv::Mat homography;               // homography matrix
+};
+
+/**
+ * @brief Feature id <-> KeyPoint id pair
+ * 
+ */
+struct FeatureVote
+{
+    int featureId;
+    int keyPointId;
+};
+
+/**
+ * @brief Image id <-> KeyPoint id pair
+ * 
+ */
+struct FeatureInfo
+{
+    int keyPointId;
+    int imgId;
+};
+
+/**
+ * @brief Image info
+ * 
+ */
+struct ImageInfo
+{
+    int numFeatures;
+    cv::Size size;
+};
+
+/**
+ * @brief CvUtils class
+ * Provides some utility functions with Mat object
+ */
+class CvUtils
+{
 public:
     /**
      * @brief Create a Mask object
@@ -22,93 +71,129 @@ public:
      * @param pose - pose of traking object
      * @return cv::Mat - Mask object
      */
-    static cv::Mat createMask(cv::Size size, const ObjectPosition &pose) {
+    static cv::Mat createMask(cv::Size size, const ObjectPosition &pose)
+    {
         cv::Mat mask = cv::Mat::zeros(size, CV_8UC1);
         cv::fillConvexPoly(mask, convertVecType<cv::Point>(pose), cv::Scalar(255), 16, 0);
         return mask;
     }
 
-    static std::vector<cv::Point2f> calcObjPos(const ObjectPosition &pos, cv::Mat &homo) {
-        std::vector<cv::Point2f> position;
-        if (pos.empty())
-            return position;
-
-        cv::Mat src = pointsToMat(pos);
-        cv::Mat dst = homo * src;
-
-        cv::Point2f point;
-        for (int i = 0; i < dst.cols; ++i) {
-            point.x = (float) (dst.at<double>(0, i) / dst.at<double>(2, i));
-            point.y = (float) (dst.at<double>(1, i) / dst.at<double>(2, i));
-            position.push_back(point);
-        }
-
-        return position;
-    }
-
-    static cv::Mat pointsToMat(const ObjectPosition &v) {
+    /**
+     * @brief Vector of points to Mat object
+     * 
+     * @param v Point`s vector
+     * @return cv::Mat Mat object
+     */
+    static cv::Mat pointsToMat(const ObjectPosition &v)
+    {
         int size = v.size();
         cv::Mat ret(3, size, CV_64FC1);
 
-        for (int i = 0; i < size; ++i) {
-            ret.at<double>(0, i) = (double) v[i].x;
-            ret.at<double>(1, i) = (double) v[i].y;
+        for (int i = 0; i < size; ++i)
+        {
+            ret.at<double>(0, i) = (double)v[i].x;
+            ret.at<double>(1, i) = (double)v[i].y;
             ret.at<double>(2, i) = 1.;
         }
         return ret;
     }
 
-    template<typename T, typename F>
-    static std::vector<T> convertVecType(const std::vector<F> &v) {
+    /**
+     * @brief Convert type of vector: from <F> to <T>
+     * 
+     * @tparam T Out type
+     * @tparam F Input type
+     * @param v Vector of objects
+     * @return std::vector<T> 
+     */
+    template <typename T, typename F>
+    static std::vector<T> convertVecType(const std::vector<F> &v)
+    {
         std::vector<T> ret;
         std::transform(v.begin(), v.end(),
                        std::back_inserter(ret),
-                       [](const F &p) { return (T) p; });
+                       [](const F &p) { return (T)p; });
         return ret;
     }
 
-    static bool ptsInsideFrame(const cv::Size &size, const std::vector<cv::Point2f> &pts) {
+    /**
+     * @brief Check points inside of area
+     * 
+     * @param size Size of area
+     * @param pts Vector of points
+     * @return true One ore more points outside of area
+     * @return false All points inside area
+     */
+    static bool ptsInsideFrame(const cv::Size &size, const std::vector<cv::Point2f> &pts)
+    {
         return pts.end() != std::find_if(pts.begin(), pts.end(),
                                          [size](const cv::Point2f &p) -> bool {
                                              return p.x < 0 or p.x > size.width or p.y < 0 or p.y > size.height;
                                          });
     }
 
-    static bool _ptsInsideFrame(const cv::Size &img_size, std::vector<cv::Point2f> &pts) {
+    /**
+     * @brief Check points inside of area
+     * 
+     * @param img_size Size of area
+     * @param pts Vector of points
+     * @return true All points inside area
+     * @return false One ore more points outside of area
+     */
+    static bool _ptsInsideFrame(const cv::Size &img_size, std::vector<cv::Point2f> &pts)
+    {
         auto itr = pts.begin();
-        while (itr != pts.end()) {
-            if (itr->x < 0 || itr->x >= img_size.width || itr->y < 0 || itr->y >= img_size.height) {
+        while (itr != pts.end())
+        {
+            if (itr->x < 0 || itr->x >= img_size.width || itr->y < 0 || itr->y >= img_size.height)
+            {
                 return false;
-            } else {
+            }
+            else
+            {
                 itr++;
             }
         }
         return true;
     }
 
-    static bool isOrthogonal(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c) {
+    /***************HELP FUNCTION FOR PROVERECT(PTS)*****************/
+    static bool isOrthogonal(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c)
+    {
         return ((b.x - a.x) * (b.x - c.x) +
                 (b.y - a.y) * (b.y - c.y)) == 0;
     }
 
-    static bool isRect(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d) {
+    static bool isRect(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d)
+    {
         return isOrthogonal(a, b, c) and
                isOrthogonal(b, c, d) and
                isOrthogonal(c, d, a);
     }
 
-    static bool isRectAnyOrder(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d) {
+    static bool isRectAnyOrder(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d)
+    {
         return isRect(a, b, c, d) or
                isRect(b, c, a, d) or
                isRect(c, a, b, d);
     }
+    /*******************************************************************/
 
-    static bool proveRect(std::vector<cv::Point2f> &pts) {
+    /**
+     * @brief Check if points are Rect
+     * 
+     * @param pts Vector of points
+     * @return true Its a rectangle
+     * @return false Its not a rectangle
+     */
+    static bool proveRect(std::vector<cv::Point2f> &pts)
+    {
         if (pts.size() != 4)
             return false;
 
         const float eps = 1e-5;
-        for (cv::Point2f &i: pts) {
+        for (cv::Point2f &i : pts)
+        {
             if (fabs(i.x) < eps)
                 i.x = 0;
             if (fabs(i.y) < eps)
@@ -118,7 +203,15 @@ public:
         return isRectAnyOrder(pts[0], pts[1], pts[2], pts[3]);
     }
 
-    static bool _proveRect(std::vector<cv::Point2f> &rect_pts) {
+    /**
+     * @brief Check if points are Rect
+     * 
+     * @param pts Vector of points
+     * @return true Its a rectangle
+     * @return false Its not a rectangle
+     */
+    static bool _proveRect(std::vector<cv::Point2f> &rect_pts)
+    {
         CV_Assert(rect_pts.size() == 4);
 
         bool result_f = true;
@@ -141,9 +234,11 @@ public:
         else
             s = -1;
 
-        for (i = 0; i < 3; i++) {
+        for (i = 0; i < 3; i++)
+        {
             val = vec[i][0] * vec[i + 1][1] - vec[i][1] * vec[i + 1][0];
-            if (val * s <= 0) {
+            if (val * s <= 0)
+            {
                 result_f = false;
                 break;
             }
@@ -152,30 +247,57 @@ public:
         return result_f;
     }
 
-    // Given three colinear points p, q, r, the function checks if
-    // point q lies on line segment 'pr'
-    static bool onSegment(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
+    /**
+     * @brief Given three colinear points p, q, r, the function checks if 
+     * point q lies on line segment 'pr'
+     * 
+     * @param p 
+     * @param q 
+     * @param r 
+     * @return true 
+     * @return false 
+     */
+    static bool onSegment(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r)
+    {
         return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) and
                q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
     }
 
-    // To find orientation of ordered triplet (p, q, r).
-    // The function returns following values
-    // 0 --> p, q and r are colinear
-    // 1 --> Clockwise
-    // 2 --> Counterclockwise
-    static int orientation(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
+    /**
+     * @brief To find orientation of ordered triplet (p, q, r).
+     * The function returns following values
+     * 0 --> p, q and r are colinear
+     * 1 --> Clockwise
+     * 2 --> Counterclockwise
+     * 
+     * @param p 
+     * @param q 
+     * @param r 
+     * @return int 
+     */
+    static int orientation(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r)
+    {
         int val = (q.y - p.y) * (r.x - q.x) -
                   (q.x - p.x) * (r.y - q.y);
 
-        if (val == 0) return 0;  // colinear
+        if (val == 0)
+            return 0;             // colinear
         return (val > 0) ? 1 : 2; // clock or counterclock wise
     }
 
-    // The function that returns true if line segment 'p1q1'
-    // and 'p2q2' intersect.
+    /**
+     * @brief The function that returns true if line segment 'p1q1'and 'p2q2' intersect.
+     * 
+     * @param p1 
+     * @param q1 
+     * @param p2 
+     * @param q2 
+     * @return true 
+     * @return false 
+     */
     static bool
-    isIntersect(const cv::Point2f &p1, const cv::Point2f &q1, const cv::Point2f &p2, const cv::Point2f &q2) {
+    isIntersect(const cv::Point2f &p1, const cv::Point2f &q1, const cv::Point2f &p2, const cv::Point2f &q2)
+    {
         // Find the four orientations needed for general and
         // special cases
         int o1 = orientation(p1, q1, p2);
@@ -189,30 +311,45 @@ public:
 
         // Special Cases
         // p1, q1 and p2 are colinear and p2 lies on segment p1q1
-        if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+        if (o1 == 0 && onSegment(p1, p2, q1))
+            return true;
 
         // p1, q1 and p2 are colinear and q2 lies on segment p1q1
-        if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+        if (o2 == 0 && onSegment(p1, q2, q1))
+            return true;
 
         // p2, q2 and p1 are colinear and p1 lies on segment p2q2
-        if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+        if (o3 == 0 && onSegment(p2, p1, q2))
+            return true;
 
         // p2, q2 and q1 are colinear and q1 lies on segment p2q2
-        if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+        if (o4 == 0 && onSegment(p2, q1, q2))
+            return true;
 
         return false; // Doesn't fall in any of the above cases
     }
 
-    static bool isInsideRect(const std::vector<cv::Point2f> &rect, const cv::Point2f &pt) {
+    /**
+     * @brief Rectangle with provided points:pt is inside rectangle:rect
+     * 
+     * @param rect Rectangle
+     * @param pt Vector of points test rectangle
+     * @return true Inside
+     * @return false Outside
+     */
+    static bool isInsideRect(const std::vector<cv::Point2f> &rect, const cv::Point2f &pt)
+    {
         int size = rect.size();
         if (size < 4)
             return false;
 
         cv::Point2f extreme(INFINITY, pt.y);
         int count = 0, i = 0;
-        do {
+        do
+        {
             int next = (i + 1) % size;
-            if (isIntersect(rect[i], rect[next], pt, extreme)) {
+            if (isIntersect(rect[i], rect[next], pt, extreme))
+            {
                 if (orientation(rect[i], pt, rect[next]) == 0)
                     return onSegment(rect[i], pt, rect[next]);
 
@@ -224,18 +361,31 @@ public:
         return count & 1;
     }
 
+    /**
+     * @brief Count number of points inside a rectangle
+     * with good tracking status (=1)
+     * 
+     * @param points Vector of points
+     * @param corner_pts Vector of corners
+     * @param status Vector of status
+     * @return int Number of good points
+     */
     static int
     amountGoodPtInsideRect(const std::vector<cv::Point2f> &pts, const std::vector<cv::Point2f> &corners,
-                           std::vector<uchar> &status) {
+                           std::vector<uchar> &status)
+    {
         if (pts.size() != status.size() or corners.size() != 4)
             return -1;
 
         int count = 0, idx = 0;
         std::for_each(pts.begin(), pts.end(), [&idx, &count, &corners, &status](const cv::Point2f &pt) {
-            if (status[idx] == 1) {
+            if (status[idx] == 1)
+            {
                 bool isInside = isInsideRect(corners, pt);
-                if (isInside) count++;
-                else status[idx] = 0;
+                if (isInside)
+                    count++;
+                else
+                    status[idx] = 0;
             }
             idx++;
         });
@@ -243,8 +393,18 @@ public:
         return count;
     }
 
+    /**
+     * @brief Count number of points inside a rectangle
+     * with good tracking status (=1)
+     * 
+     * @param points Vector of points
+     * @param corner_pts Vector of corners
+     * @param status Vector of status
+     * @return int Number of good points
+     */
     static int _amountGoodPtInsideRect(std::vector<cv::Point2f> &points, std::vector<cv::Point2f> &corner_pts,
-                                       std::vector<unsigned char> &status) {
+                                       std::vector<unsigned char> &status)
+    {
         CV_Assert(corner_pts.size() == 4);
         CV_Assert(points.size() == status.size());
 
@@ -275,7 +435,8 @@ public:
         min_y = corner_pts[0].y;
 
         int i;
-        for (i = 1; i < 4; i++) {
+        for (i = 1; i < 4; i++)
+        {
             if (corner_pts[i].x > max_x)
                 max_x = corner_pts[i].x;
             if (corner_pts[i].x < min_x)
@@ -289,14 +450,20 @@ public:
         float val[4];
         int size = points.size();
         int count = 0;
-        for (int j = 0; j < size; j++) {
-            if (status[j] > 0) {
-                for (i = 0; i < 4; i++) {
+        for (int j = 0; j < size; j++)
+        {
+            if (status[j] > 0)
+            {
+                for (i = 0; i < 4; i++)
+                {
                     val[i] = a[i] * points[j].x + b[i] * points[j].y + c[i];
                 }
-                if (val[0] * val[1] <= 0 && val[2] * val[3] <= 0) {
+                if (val[0] * val[1] <= 0 && val[2] * val[3] <= 0)
+                {
                     count++;
-                } else {
+                }
+                else
+                {
                     status[j] = 0;
                 }
             }
@@ -305,27 +472,75 @@ public:
         return count;
     }
 
-    static std::vector<cv::Point2f> affineTransformRect(cv::Size size, cv::Mat mat) {
+    /**
+     * @brief Calculates the object coordinates depending on homography matrix
+     * 
+     * @param pos Position of object
+     * @param homo Homography matrix
+     * @return std::vector<cv::Point2f> Object coordinates
+     */
+    static std::vector<cv::Point2f> calcObjPos(const ObjectPosition &pos, cv::Mat &homo)
+    {
+        std::vector<cv::Point2f> position;
+        if (pos.empty())
+            return position;
+
+        cv::Mat src = pointsToMat(pos);
+        cv::Mat dst = homo * src;
+
+        cv::Point2f point;
+        for (int i = 0; i < dst.cols; ++i)
+        {
+            point.x = (float)(dst.at<double>(0, i) / dst.at<double>(2, i));
+            point.y = (float)(dst.at<double>(1, i) / dst.at<double>(2, i));
+            position.push_back(point);
+        }
+
+        return position;
+    }
+
+    /**
+     * @brief Calculates coordinates of detected object
+     * 
+     * @param size Size of marker
+     * @param mat Homography matrix
+     * @return std::vector<cv::Point2f> Coordinates of detected object
+     */
+    static std::vector<cv::Point2f> transformMarkerCoordToObjectCoord(cv::Size size, cv::Mat mat)
+    {
         std::vector<cv::Point2f> points;
-        float width = (float) (size.width) - 1;
-        float height = (float) (size.height) - 1;
-        cv::Mat srcMat = (cv::Mat_<double>(3, 4) << 0, 0, width, width, 0, height, height, 0, 1, 1, 1, 1);
+        float width = (float)(size.width) - 1;
+        float height = (float)(size.height) - 1;
+        // Create a 3x4 Matrix
+        cv::Mat srcMat = (cv::Mat_<double>(3, 4) << 0, 0, width, width,
+                          0, height, height, 0,
+                          1, 1, 1, 1);
         cv::Mat destMat = mat * srcMat;
         cv::Point2f pt;
-        for (int i = 0; i < 4; i++) {
-            pt.x = (float) (destMat.at<double>(0, i) / destMat.at<double>(2, i));
-            pt.y = (float) (destMat.at<double>(1, i) / destMat.at<double>(2, i));
+        for (int i = 0; i < 4; i++)
+        {
+            pt.x = (float)(destMat.at<double>(0, i) / destMat.at<double>(2, i));
+            pt.y = (float)(destMat.at<double>(1, i) / destMat.at<double>(2, i));
             points.push_back(pt);
         }
 
         return points;
     }
 
-    static std::vector<cv::Point2f> scalePoints(std::vector<cv::Point2f> &point_vec, double scale) {
+    /**
+     * @brief Scale points
+     * 
+     * @param point_vec Input vector of points
+     * @param scale Scale factor
+     * @return std::vector<cv::Point2f> Vector of scaled points
+     */
+    static std::vector<cv::Point2f> scalePoints(std::vector<cv::Point2f> &point_vec, double scale)
+    {
         std::vector<cv::Point2f> ret_vec;
 
         auto itr = point_vec.begin();
-        while (itr != point_vec.end()) {
+        while (itr != point_vec.end())
+        {
             ret_vec.push_back(*itr * scale);
             itr++;
         }

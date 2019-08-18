@@ -36,9 +36,8 @@ bool AR::keepTracking(const cv::Mat &frame) {
     return trackingInstance->keepTracking(frame);
 }
 
-bool AR::startTracking(const cv::Mat &frame, const ObjectPosition &pose) {
+void AR::startTracking(const cv::Mat &frame, const ObjectPosition &pose) {
     trackingInstance->start(frame, pose);
-    return true;
 }
 
 

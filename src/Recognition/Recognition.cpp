@@ -1,40 +1,47 @@
 #include "Recognition.hpp"
 
-Recognition::Recognition() {
+Recognition::Recognition()
+{
     //TODO: init detector and descriptor
-    vw = new BoVW();
+    vw = new FeatureDB();
     featureDetector = cv::AKAZE::create();
-//    featureDetector = cv::xfeatures2d::SURF::create();
+    //    featureDetector = cv::xfeatures2d::SURF::create();
     imageAmount = 0;
     featureAmount = 0;
 }
 
-void Recognition::addAndCreateBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters) {
+void Recognition::addAndCreateBagOfVisualWords(const std::vector<cv::Mat> &imgs, int numClusters)
+{
     std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptor;
-    for (const auto &img: imgs) {
+    for (const auto &img : imgs)
+    {
         extractFeatures(img, keyPoints, descriptor);
         vw->addFeatures(descriptor);
     }
     vw->create(numClusters);
 }
 
-void Recognition::addVisualWord(const cv::Mat &img) {
+void Recognition::addVisualWord(const cv::Mat &img)
+{
     std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptor;
     extractFeatures(img, keyPoints, descriptor);
     vw->addFeatures(descriptor);
 }
 
-void Recognition::createBagOfVisualWords(int numClusters) {
+void Recognition::createBagOfVisualWords(int numClusters)
+{
     vw->create(numClusters);
 }
 
-void Recognition::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor) {
+void Recognition::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor)
+{
     featureDetector->detectAndCompute(img, cv::noArray(), keyPoints, descriptor);
 }
 
-int Recognition::addTrackImage(const cv::Mat &img) {
+int Recognition::addTrackImage(const cv::Mat &img)
+{
     std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptor;
     extractFeatures(img, keyPoints, descriptor);
@@ -43,52 +50,57 @@ int Recognition::addTrackImage(const cv::Mat &img) {
     int id = imageAmount;
     int status = storeImageFeatures(id, img.size(), keyPoints, ids);
 
-    if (status < 0) return -1;
+    if (status < 0)
+        return -1;
     return 0;
 }
 
-int Recognition::getFeatureIds(const cv::Mat &descriptor, std::vector<int> &ids) {
-    if (descriptor.empty()) return -1;
-    int vote = vw->getVote();
+int Recognition::getFeatureIds(const cv::Mat &descriptor, std::vector<int> &ids)
+{
+    if (descriptor.empty())
+        return -1;
     int size = descriptor.rows;
 
     cv::Mat id = vw->search(descriptor);
 
-    for (int i = 0; i < size; ++i) {
-        for (int j = 0; j < vote; ++j) {
-            ids.push_back(id.at<int>(i, j));
-        }
+    for (int i = 0; i < size; ++i)
+    {
+        ids.push_back(id.at<int>(i, 0));
     }
 
     return 0;
 }
 
 int Recognition::storeImageFeatures(int id, const cv::Size &size, std::vector<cv::KeyPoint> keyPoints,
-                                    std::vector<int> ids) {
-    featureInfo fInfo;
+                                    std::vector<int> ids)
+{
+    FeatureInfo fInfo;
 
-    imageInfo iInfo;
-    iInfo.feature_num = keyPoints.size();
-    iInfo.img_size = size;
+    ImageInfo iInfo;
+    iInfo.numFeatures = keyPoints.size();
+    iInfo.size = size;
 
     // Image info
-    auto statusAdd = imageInfoStore.insert(std::pair<int, imageInfo>(id, iInfo));
+    auto statusAdd = imageInfoStore.insert(std::pair<int, ImageInfo>(id, iInfo));
 
-    if (!statusAdd.second) return -1;
+    if (!statusAdd.second)
+        return -1;
 
     // Vote info
-    auto *voteTable = new std::vector<featureVote>;
-    voteStorage.insert(std::pair<int, std::vector<featureVote> *>(id, voteTable));
+    auto *voteTable = new std::vector<FeatureVote>;
+    voteStorage.insert(std::pair<int, std::vector<FeatureVote> *>(id, voteTable));
 
-    fInfo.img_id = id;
+    fInfo.imgId = id;
     int kpId, kpSize = keyPoints.size();
 
-    for (int i = 0; i < kpSize; ++i) {
-        if (ids[i * vw->getVote()] >= 0) {
+    for (int i = 0; i < kpSize; ++i)
+    {
+        if (ids[i] >= 0)
+        {
             kpId = getCandidateKpId();
-            fInfo.keypoint_id = kpId;
+            fInfo.keyPointId = kpId;
             keyPointStore.insert(std::pair<int, cv::KeyPoint>(kpId, keyPoints[i]));
-            featureStore.insert(std::pair<int, featureInfo>(ids[i * vw->getVote()], fInfo));
+            featureStore.insert(std::pair<int, FeatureInfo>(ids[i], fInfo));
         }
     }
 
@@ -96,7 +108,8 @@ int Recognition::storeImageFeatures(int id, const cv::Size &size, std::vector<cv
     return 0;
 }
 
-std::vector<QueryItem> Recognition::queryImage(const cv::Mat &img, int amountRes) {
+std::vector<QueryItem> Recognition::queryImage(const cv::Mat &img, int amountRes)
+{
     std::vector<QueryItem> queryReturn;
     std::vector<cv::KeyPoint> kp;
     cv::Mat descriptor;
@@ -111,14 +124,20 @@ std::vector<QueryItem> Recognition::queryImage(const cv::Mat &img, int amountRes
     return queryReturn;
 }
 
-int Recognition::getCandidateKpId() {
+int Recognition::getCandidateKpId()
+{
     int size = keyPointStore.size();
-    if (featureAmount == size) {
+    if (featureAmount == size)
+    {
         featureAmount++;
         return featureAmount;
-    } else if (featureAmount > size) {
-        for (int i = 1; i <= featureAmount; ++i) {
-            if (keyPointStore.count(i) == 0) {
+    }
+    else if (featureAmount > size)
+    {
+        for (int i = 1; i <= featureAmount; ++i)
+        {
+            if (keyPointStore.count(i) == 0)
+            {
                 return i;
             }
         }
@@ -128,7 +147,8 @@ int Recognition::getCandidateKpId() {
 
 std::vector<QueryItem>
 Recognition::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids, cv::Size size, int amountWords,
-                           int amountRes) {
+                           int amountRes)
+{
     std::vector<QueryItem> queryReturn;
     voteQueryFeatures(keyPoints, ids);
     std::vector<QueryItem> tmp = getMatchResults(keyPoints, amountWords);
@@ -137,56 +157,61 @@ Recognition::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int>
     return queryReturn;
 }
 
-void Recognition::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids) {
-    std::multimap<int, featureInfo>::iterator featureIt;
-    std::map<int, std::vector<featureVote> *>::iterator voteIt;
-    featureVote vote;
-    featureInfo feature;
+void Recognition::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids)
+{
+    std::multimap<int, FeatureInfo>::iterator featureIt;
+    std::map<int, std::vector<FeatureVote> *>::iterator voteIt;
+    FeatureVote vote;
+    FeatureInfo feature;
 
-    int size = keyPoints.size(), voteNum = vw->getVote(),
-            idsIdx = 0;
+    int size = keyPoints.size(), idsIdx = 0;
 
-    for (int i = 0; i < size; ++i) {
-        for (int j = 0; j < voteNum; ++j) {
-            if (ids[idsIdx] >= 0) {
-                featureIt = featureStore.find(ids[idsIdx]);
-                while (featureIt != featureStore.end() && featureIt->first == ids[idsIdx]) {
-                    feature = featureIt->second;
-                    vote.in_feat_i = i;
-                    vote.keypoint_id = feature.keypoint_id;
-                    voteIt = voteStorage.find(feature.img_id);
-                    if (voteIt != voteStorage.end()) {
-                        voteIt->second->push_back(vote);
-                    }
-                    featureIt++;
+    for (int i = 0; i < size; ++i)
+    {
+        if (ids[idsIdx] >= 0)
+        {
+            featureIt = featureStore.find(ids[idsIdx]);
+            while (featureIt != featureStore.end() && featureIt->first == ids[idsIdx])
+            {
+                feature = featureIt->second;
+                vote.featureId = i;
+                vote.keyPointId = feature.keyPointId;
+                voteIt = voteStorage.find(feature.imgId);
+                if (voteIt != voteStorage.end())
+                {
+                    voteIt->second->push_back(vote);
                 }
+                featureIt++;
             }
-            idsIdx++;
         }
+        idsIdx++;
     }
 }
 
-std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> keyPoints, int amountWords) {
-
+std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> keyPoints, int amountWords)
+{
     std::vector<QueryItem> queryResult;
     QueryItem queryItem;
-    std::vector<featureVote> *voteTable;
-    int numMatch, imgId, imgFeatureNum, vote = vw->getVote(), featureNum = keyPoints.size();
+    std::vector<FeatureVote> *voteTable;
+    int numMatch, imgId, imgFeatureNum, featureNum = keyPoints.size();
     float pp, prob;
     auto it = voteStorage.begin();
-    while (it != voteStorage.end()) {
+    while (it != voteStorage.end())
+    {
         voteTable = it->second;
         numMatch = voteTable->size();
-        if (numMatch >= MIN_MATCH) {
+        if (numMatch >= MIN_MATCH)
+        {
             imgId = it->first;
-            imgFeatureNum = imageInfoStore[imgId].feature_num;
-            pp = std::min((float) vote * imgFeatureNum / amountWords, 1.f);
+            imgFeatureNum = imageInfoStore[imgId].numFeatures;
+            pp = std::min((float)imgFeatureNum / amountWords, 1.f);
             prob = probDistribution(featureNum, numMatch, pp);
 
-            if (prob >= MIN_PROBABILITY) {
+            if (prob >= MIN_PROBABILITY)
+            {
                 queryItem.imgId = imgId;
                 queryItem.amountMatched = numMatch;
-                queryItem.imgSize = imageInfoStore[imgId].img_size;
+                queryItem.imgSize = imageInfoStore[imgId].size;
                 queryItem.probability = prob;
                 queryResult.push_back(queryItem);
             }
@@ -201,31 +226,33 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
 
 std::vector<QueryItem>
 Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<QueryItem> pre, cv::Size size,
-                               int amountRes) {
-
+                               int amountRes)
+{
     std::vector<QueryItem> queryResult;
     QueryItem queryItem;
     int sizePre = pre.size();
     if (sizePre < 1)
         return queryResult;
 
-    int imgId, numMatch, numFeatures = keyPoints.size(), count = 0;
-    std::vector<featureVote> *voteTable;
+    int imgId, count = 0;
+    std::vector<FeatureVote> *voteTable;
     std::vector<cv::Point2f> q, r;
-    cv::Mat pose;
-    int thresholdDist = round(sqrt(DISTANTION_TOLERANCE * size.width * size.height / M_PI));
-    for (int i = 0; i < sizePre && count < amountRes; ++i) {
+    cv::Mat homography;
+    int thresholdDist = (int)round(sqrt(DISTANTION_TOLERANCE * size.width * size.height / M_PI));
+    for (int i = 0; i < sizePre && count < amountRes; ++i)
+    {
         queryItem = pre[i];
         imgId = queryItem.imgId;
-        numMatch = queryItem.amountMatched;
 
         voteTable = voteStorage[imgId];
         findPointPair(keyPoints, *voteTable, q, r);
-        pose = cv::findHomography(cv::Mat(r), cv::Mat(q), cv::RANSAC, thresholdDist);
-        std::vector<cv::Point2f> posePoint = CvUtils::affineTransformRect(imageInfoStore[imgId].img_size, pose);
+        homography = cv::findHomography(cv::Mat(r), cv::Mat(q), cv::RANSAC, thresholdDist);
+        std::vector<cv::Point2f> posePoint = CvUtils::transformMarkerCoordToObjectCoord(imageInfoStore[imgId].size,
+                                                                                        homography);
 
-        if (CvUtils::_proveRect(posePoint)) {
-            queryItem.pose = pose;
+        if (CvUtils::_proveRect(posePoint))
+        {
+            queryItem.homography = homography;
             queryItem.objPose = posePoint;
             queryResult.push_back(queryItem);
             count++;
@@ -238,29 +265,35 @@ Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<
     return queryResult;
 }
 
-void Recognition::clearVote() {
+void Recognition::clearVote()
+{
     auto it = voteStorage.begin();
-    while (it != voteStorage.end()) {
+    while (it != voteStorage.end())
+    {
         it->second->clear();
         it++;
     }
 }
 
-float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
+float Recognition::probDistribution(int numFeatures, int numMatch, float pp)
+{
     if (pp == 1)
         return pp;
     float prob = 0.f;
     float logPp = log(pp);
     float logNp = log(1 - pp);
     float tmp;
-    for (int i = 0; i <= numMatch; ++i) {
+    for (int i = 0; i <= numMatch; ++i)
+    {
         tmp = 0.f;
-        for (int j = 0; j < i; ++j) {
+        for (int j = 0; j < i; ++j)
+        {
             tmp += log(numFeatures - j) - log(j + 1);
         }
         tmp += logPp * i + logNp * (numFeatures - i);
         prob += exp(tmp);
-        if (prob > 1) {
+        if (prob > 1)
+        {
             prob = 1;
             break;
         }
@@ -268,12 +301,14 @@ float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
     return prob;
 }
 
-void Recognition::findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<featureVote> voteTable,
-                                std::vector<cv::Point2f> &q, std::vector<cv::Point2f> &r) {
+void Recognition::findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<FeatureVote> voteTable,
+                                std::vector<cv::Point2f> &q, std::vector<cv::Point2f> &r)
+{
     auto it = voteTable.begin();
-    while (it != voteTable.end()) {
-        q.push_back(keyPoints[it->in_feat_i].pt);
-        r.push_back(keyPointStore[it->keypoint_id].pt);
+    while (it != voteTable.end())
+    {
+        q.push_back(keyPoints[it->featureId].pt);
+        r.push_back(keyPointStore[it->keyPointId].pt);
         it++;
     }
 }

@@ -27,15 +27,13 @@ add_library(ar_core-lib
         SHARED
         ${LIB_SRC_DIR}/src/Utils/CvUtils.hpp
         ${LIB_SRC_DIR}/src/Recognition/Recognition.hpp
-        ${LIB_SRC_DIR}/src/Tracking/TrackerEntity.hpp
         ${LIB_SRC_DIR}/src/Tracking/Tracking.hpp
         ${LIB_SRC_DIR}/src/Recognition/Recognition.cpp
-        ${LIB_SRC_DIR}/src/Tracking/TrackerEntity.cpp
         ${LIB_SRC_DIR}/src/Tracking/Tracking.cpp
         ${LIB_SRC_DIR}/src/AR/Ar.cpp
         ${LIB_SRC_DIR}/src/AR/Ar.hpp
-        ${LIB_SRC_DIR}/src/Recognition/BoVw.cpp
-        ${LIB_SRC_DIR}/src/Recognition/BoVw.hpp
+        ${LIB_SRC_DIR}/src/Recognition/FeatureDB.hpp
+        ${LIB_SRC_DIR}/src/Recognition/FeatureDB.cpp
         ${LIB_SRC_DIR}/src/android.hpp
         ${LIB_SRC_DIR}/src/android.cpp
         src/main/cpp/native-lib.cpp
