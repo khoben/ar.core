@@ -16,7 +16,7 @@ Currently have PC and Android version (JNI).
 
 ### Markers
 ![img1](https://github.com/khoben/ar.core/blob/master/README.md-images/czech.jpg)
-![img2](https://github.com/khoben/ar.core/blob/master/README.md-images/miku,jpg)
+![img2](https://github.com/khoben/ar.core/blob/master/README.md-images/miku.jpg)
 
 ### Recognition
 ![img3](https://github.com/khoben/ar.core/blob/master/README.md-images/2.png)
