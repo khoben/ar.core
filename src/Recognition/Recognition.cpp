@@ -4,7 +4,7 @@ Recognition::Recognition() {
     //TODO: init detector and descriptor
     vw = new FeatureDB();
     featureDetector = cv::AKAZE::create();
-    featureDetector.dynamicCast<cv::AKAZE>()->setThreshold(5e-3);
+    featureDetector.dynamicCast<cv::AKAZE>()->setThreshold(3e-3);
     //    featureDetector = cv::xfeatures2d::SURF::create();
     imageAmount = 0;
     featureAmount = 0;
