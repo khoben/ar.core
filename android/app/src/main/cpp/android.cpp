@@ -3,7 +3,7 @@
 AR *ar;                       // AR instance
 Mat query;                    // query frame
 int scale = 1;                // initial scale
-const int maxFrameSize = 600; // maximum frame size
+const int maxFrameSize = 800; // maximum frame size
 bool isTracked = false;       // tracking status: false - not detected
 int trackedId = -1;           // id of detected marker
 
