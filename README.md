@@ -12,17 +12,21 @@ Currently have PC and Android version (JNI).
 * OpenCV 4.1 (PC and Android)
 * Android NDK 20
 
-## Test
+## Tests
 
 ### Markers
+<p align="center">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/czech.jpg" width="300" height="300">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/miku.jpg" width="300" height="300">
+</p>
 
 ### Recognition
+<p align="center">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/2.png" width="300">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/1.png" width="300">
+</p>
 
-### Known issues
+## Known issues
 * Unable to find multiple objects
 * Bad recognition when too few features have been extracted from marker`s image
 
