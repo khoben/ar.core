@@ -34,8 +34,8 @@ add_library(ar_core-lib
         ${LIB_SRC_DIR}/src/AR/Ar.hpp
         ${LIB_SRC_DIR}/src/Recognition/FeatureDB.hpp
         ${LIB_SRC_DIR}/src/Recognition/FeatureDB.cpp
-        ${LIB_SRC_DIR}/src/android.hpp
-        ${LIB_SRC_DIR}/src/android.cpp
+        src/main/cpp/android.hpp
+        src/main/cpp/android.cpp
         src/main/cpp/native-lib.cpp
         )
 
