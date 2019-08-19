@@ -217,9 +217,10 @@ Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<
         voteTable = voteStorage[imgId];
         findPointPair(keyPoints, *voteTable, q, r);
         homography = cv::findHomography(cv::Mat(r), cv::Mat(q), cv::RANSAC, thresholdDist);
+        // check empty homography matrix
+        if (homography.empty()) continue;
         std::vector<cv::Point2f> posePoint = CvUtils::transformMarkerCoordToObjectCoord(imageInfoStore[imgId].size,
                                                                                         homography);
-
         if (CvUtils::_proveRect(posePoint)) {
             queryItem.homography = homography;
             queryItem.objPose = posePoint;
