@@ -10,8 +10,7 @@
  * @brief Class provides operations with features
  * 
  */
-class FeatureDB
-{
+class FeatureDB {
 private:
     cv::Ptr<cv::DescriptorMatcher> descriptorMatcher; // Descriptor matcher
     float RADIUS;                                     // Descriptor matcher nn ratio

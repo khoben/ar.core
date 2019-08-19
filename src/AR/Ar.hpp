@@ -11,8 +11,7 @@
  * and recognition functions
  * 
  */
-class AR
-{
+class AR {
 private:
     Tracking *trackingInstance;       // tracking instance
     Recognition *recognitionInstance; // recognition instance

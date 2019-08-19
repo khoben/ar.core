@@ -12,8 +12,7 @@
  * @brief Class provides store and recognition marker image
  * 
  */
-class Recognition
-{
+class Recognition {
 private:
     cv::Ptr<cv::FeatureDetector> featureDetector; // Feature detector
     FeatureDB *vw;                                // 'Bag of visual words' object

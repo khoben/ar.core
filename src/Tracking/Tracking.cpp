@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 Tracking::Tracking() {
-    maxAmountCorners = 60;
+    maxAmountCorners = 80;
     minQualityCorners = .1;
     minDistanceCorners = 5;
     MIN_FEATURE_POINTS = 6;
@@ -39,26 +39,29 @@ bool Tracking::keepTracking(const cv::Mat &frame) {
             std::cout << "Zero homo" << std::endl;
             return false;
         } else {
-            // calc object position
-//            std::vector<cv::Point2f> nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
-            std::vector<cv::Point2f> nextObjPos;
-            cv::perspectiveTransform(objectPosition, nextObjPos, homography);
+            // Calc object position on frame
+            std::vector<cv::Point2f> nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
+//            std::vector<cv::Point2f> nextObjPos;
+//            cv::perspectiveTransform(objectPosition, nextObjPos, homography);
             cv::Size size = prevFrame.size();
-            // True if points inside frame
-            if (CvUtils::_ptsInsideFrame(size, nextObjPos)) {
+
+            // Check if points outside frame
+            if (!CvUtils::ptsInsideFrame(size, nextObjPos)) {
                 std::cout << "pts inside" << std::endl;
                 return false;
             }
-            // True if that`s rect
+            // Check if detected boundary is a rect
             if (!CvUtils::_proveRect(nextObjPos)) {
                 std::cout << "not a rect" << std::endl;
                 return false;
             }
+            // Check optical flow consistence
             if (nextCorners.size() != opticalFlowStatus.size()) {
                 std::cout << "flow error" << std::endl;
                 return false;
             }
 
+            // Count good points (with status == 1) inside object boundary
             int featurePtInsideRect = CvUtils::_amountGoodPtInsideRect(nextCorners, nextObjPos, opticalFlowStatus);
 
             if (featurePtInsideRect < MIN_FEATURE_POINTS) {
@@ -66,6 +69,7 @@ bool Tracking::keepTracking(const cv::Mat &frame) {
                 return false;
             }
 
+            // Prepare to next frame
             frame.copyTo(prevFrame);
             corners = nextCorners;
             objectPosition = nextObjPos;

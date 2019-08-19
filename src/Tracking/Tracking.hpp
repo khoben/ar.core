@@ -14,8 +14,7 @@
  * @brief Class provides KLT tracking
  * 
  */
-class Tracking
-{
+class Tracking {
 public:
     ObjectPosition objectPosition;    // coords of object`s corners
     std::vector<cv::Point2f> corners; // corners

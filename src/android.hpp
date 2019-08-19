@@ -20,6 +20,7 @@ using namespace cv;
 #else
 // LOGS NO ANDROID
 #include <stdio.h>
+
 #define LOGV(...)        \
     printf("  ");        \
     printf(__VA_ARGS__); \

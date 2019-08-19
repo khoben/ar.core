@@ -1,14 +1,14 @@
 #include "opencv2/opencv.hpp"
 #include "AR/Ar.hpp"
-#include "Utils/CvUtils.hpp"
+#include <climits>
 
 using namespace cv;
 
 AR *ar;                       // AR instance
-const int maxFrameSize = 600; // maximum query frame size
+const int maxFrameSize = INT_MAX; // maximum query frame size
 
 /**
- * @brief Make query resised frame
+ * @brief Make query resized frame
  * 
  * @param size Size of source frame
  * @param max_size Max size
@@ -32,8 +32,7 @@ int start();
  */
 int single(cv::Mat frame);
 
-int main(int, char **)
-{
+int main(int, char **) {
     // init AR instance
     ar = new AR();
     // load marker images
@@ -52,19 +51,16 @@ int main(int, char **)
     return 0;
 }
 
-cv::Mat makeQueryMat(cv::Size size, int max_size, int &scale)
-{
+cv::Mat makeQueryMat(cv::Size size, int max_size, int &scale) {
     int frame_max_size = std::max(size.width, size.height);
     scale = 1;
-    while ((frame_max_size / scale) > max_size)
-    {
+    while ((frame_max_size / scale) > max_size) {
         scale *= 2;
     }
     return cv::Mat(size.height / scale, size.width / scale, CV_8UC1);
 }
 
-int single(cv::Mat frame)
-{
+int single(cv::Mat frame) {
     cv::Mat gray, query;
     int scale = 1;
     query = makeQueryMat(frame.size(), maxFrameSize, scale);
@@ -77,8 +73,7 @@ int single(cv::Mat frame)
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
     cv::resize(gray, query, query.size());
     std::vector<QueryItem> result = ar->process(query);
-    if (!result.empty())
-    {
+    if (!result.empty()) {
         std::vector<cv::Point2f> objPose;
         QueryItem r = result[0];
 
@@ -91,8 +86,7 @@ int single(cv::Mat frame)
 
         cv::Scalar val(255);
         cv::line(frame, objPose[3], objPose[0], val);
-        for (int i = 0; i < 3; i++)
-        {
+        for (int i = 0; i < 3; i++) {
             line(frame, objPose[i], objPose[i + 1], val);
         }
 
@@ -106,12 +100,10 @@ int single(cv::Mat frame)
     return 0;
 }
 
-int start()
-{
+int start() {
     cv::VideoCapture videoCapture;
     videoCapture.open(0);
-    if (!videoCapture.isOpened())
-    {
+    if (!videoCapture.isOpened()) {
         std::cout << "Failed to Open Camera" << std::endl;
         return -1;
     }
@@ -122,24 +114,19 @@ int start()
 
     bool isTracked = false;
     int imgId = -1;
-    for (;;)
-    {
+    for (;;) {
         videoCapture >> frame;
         if (frame.empty())
             break;
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-        if (isTracked)
-        {
+        if (isTracked) {
             std::cout << "Continue.. " << std::endl;
             isTracked = ar->keepTracking(gray);
-        }
-        else
-        {
+        } else {
             imgId = -1;
             cv::resize(gray, query, query.size());
             std::vector<QueryItem> result = ar->process(query);
-            if (!result.empty())
-            {
+            if (!result.empty()) {
                 std::vector<cv::Point2f> objPose;
                 QueryItem r = result[0];
 
@@ -152,13 +139,11 @@ int start()
                 imgId = r.imgId;
             }
         }
-        if (isTracked && imgId != -1)
-        {
+        if (isTracked && imgId != -1) {
             cv::Scalar val(255);
             ObjectPosition objPose = ar->getTrackingInstance()->objectPosition;
             cv::line(frame, objPose[3], objPose[0], val);
-            for (int i = 0; i < 3; i++)
-            {
+            for (int i = 0; i < 3; i++) {
                 line(frame, objPose[i], objPose[i + 1], val);
             }
 
