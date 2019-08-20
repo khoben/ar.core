@@ -68,20 +68,20 @@ public:
      * @return std::vector<QueryItem> Query results
      */
     std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
-
-
     ~Recognition();
 
 private:
+
     /**
-     * @brief Calculates probability distribution
+     * @brief calculates the CDF
+     *BIN(x, n, p) = n!/(x!*(n-x)!) p^x (1-p)^(n-x)
      *
-     * @param numFeatures Amount of features of frame
-     * @param numMatch Amount of matches between frame and some marker
-     * @param pp Percentage of features for some marker
-     * @return float Probability
+     * @param x Random variable
+     * @param n Total number of trials
+     * @param p Probability of success of a single trial
+     * @return float CDF value
      */
-    float probDistribution(int numFeatures, int numMatch, float pp);
+    float binomialCDF(int x, int n, float p);
 
     /**
      * @brief Extract features from image
