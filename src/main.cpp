@@ -40,7 +40,7 @@ int main(int, char **) {
     cv::Mat mat_1 = cv::imread(R"(..\resources\marker\miku.jpg)", 0);
     cv::Mat mat_3 = cv::imread(R"(..\resources\marker\czech.jpg)", 0);
     cv::Mat mat_4 = cv::imread(R"(..\resources\marker\314.png)", 0);
-    cv::Mat mat_2 = cv::imread("..\\resources\\2.jpg");
+    cv::Mat mat_2 = cv::imread("..\\resources\\6.jpg");
     ar->add(mat_1);
     ar->add(mat_3);
     ar->add(mat_4);
@@ -68,7 +68,6 @@ int single(cv::Mat frame) {
     int scale = 1;
     query = makeQueryMat(frame.size(), maxFrameSize, scale);
 
-    bool isTracked = false;
     int imgId = -1;
 
     if (frame.empty())
@@ -77,27 +76,26 @@ int single(cv::Mat frame) {
     cv::resize(gray, query, query.size());
     std::vector<QueryItem> result = ar->process(query);
     if (!result.empty()) {
-        std::vector<cv::Point2f> objPose;
-        QueryItem r = result[0];
+        for (const auto& r: result) {
+            std::vector<cv::Point2f> objPose;
 
-        std::cout << "Matched: imgId:" << r.imgId << std::endl;
-        objPose = r.objPose;
-        objPose = CvUtils::scalePoints(objPose, scale);
-        std::cout << "Pose: " << objPose << " probability: " << r.probability << std::endl;
-        isTracked = true;
-        imgId = r.imgId;
+            std::cout << "Matched: imgId:" << r.imgId << std::endl;
+            objPose = r.objPose;
+            objPose = CvUtils::scalePoints(objPose, scale);
+            std::cout << "Pose: " << objPose << " probability: " << r.probability << std::endl;
+            imgId = r.imgId;
 
-        cv::Scalar val(255);
-        cv::line(frame, objPose[3], objPose[0], val, 3 );
-        for (int i = 0; i < 3; i++) {
-            line(frame, objPose[i], objPose[i + 1], val, 3);
+            cv::Scalar val(255);
+            cv::line(frame, objPose[3], objPose[0], val, 3);
+            for (int i = 0; i < 3; i++) {
+                line(frame, objPose[i], objPose[i + 1], val, 3);
+            }
+
+            cv::Point center((objPose[0] + objPose[2]) / 2);
+
+            cv::putText(frame, std::to_string(imgId), center, OPENCV_FONT, 3, val, 3);
         }
-
-        cv::Point center((objPose[0] + objPose[2]) / 2);
-
-        cv::putText(frame, std::to_string(imgId), center, OPENCV_FONT, 3, val, 3);
     }
-
     cv::namedWindow("AR", WINDOW_NORMAL);
     cv::resizeWindow("AR", 600,600);
     cv::imshow("AR", frame);
