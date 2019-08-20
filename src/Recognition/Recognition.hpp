@@ -21,6 +21,8 @@ private:
     int MIN_MATCH = 6;                            // Minimum number of required matches
     float MIN_PROBABILITY = 0.6f;                 // Minimum probability of successful match
     float DISTANTION_TOLERANCE = 5e-4;            // Distance tolerance between corners
+    float MIN_PROBABILITY_SUCCESS_MATCH = MIN_PROBABILITY
+            * MIN_PROBABILITY * MIN_PROBABILITY; // Minimal success match probability percentage
 
     std::multimap<int, FeatureInfo> featureStore;          // {Image id: Feature} map
     std::map<int, cv::KeyPoint> keyPointStore;             // {Image id: KeyPoint} map

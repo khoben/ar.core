@@ -182,7 +182,8 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
             imgId = it->first;
             imgDBFeatureNum = imageInfoStore[imgId].numFeatures;
 //            pp = std::min((float) imgDBFeatureNum / amountWords, 1.f);
-            pp = std::min((float) imgDBFeatureNum / (amountWords * numMarkers), 1.f);
+            // >? Maybe instead imgDBFeatureNum set median value
+            pp = std::min(MIN_PROBABILITY_SUCCESS_MATCH * imgDBFeatureNum / amountWords, 1.f);
             prob = binomialCDF(numMatch, featureNum, pp);
 
             if (prob >= MIN_PROBABILITY) {
