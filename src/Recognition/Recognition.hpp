@@ -69,9 +69,13 @@ public:
      */
     std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
 
+
+    ~Recognition();
+
+private:
     /**
      * @brief Calculates probability distribution
-     * 
+     *
      * @param numFeatures Amount of features of frame
      * @param numMatch Amount of matches between frame and some marker
      * @param pp Percentage of features for some marker
@@ -79,9 +83,6 @@ public:
      */
     float probDistribution(int numFeatures, int numMatch, float pp);
 
-    ~Recognition();
-
-private:
     /**
      * @brief Extract features from image
      * 
