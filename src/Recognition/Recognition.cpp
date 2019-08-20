@@ -172,6 +172,7 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
     int imgId;                          // database image id
     int imgDBFeatureNum;                // amount extracted features from database image
     int featureNum = keyPoints.size();  // amount extracted features from query image
+    uint numMarkers = imageInfoStore.size(); // amount marker image in database
     float pp, prob;
     auto it = voteStorage.begin();
     while (it != voteStorage.end()) {
@@ -180,7 +181,8 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
         if (numMatch >= MIN_MATCH) {
             imgId = it->first;
             imgDBFeatureNum = imageInfoStore[imgId].numFeatures;
-            pp = std::min((float) imgDBFeatureNum / amountWords, 1.f);
+//            pp = std::min((float) imgDBFeatureNum / amountWords, 1.f);
+            pp = std::min((float) imgDBFeatureNum / (amountWords * numMarkers), 1.f);
             prob = binomialCDF(numMatch, featureNum, pp);
 
             if (prob >= MIN_PROBABILITY) {
