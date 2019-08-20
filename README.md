@@ -36,6 +36,5 @@ Currently have PC and Android version (JNI).
 
 ## Known issues
 * Unable to find multiple objects with same marker
-* Bad recognition when too few features have been extracted from marker`s image
 * Sometimes it calculates incorrect object coordinates on tracking phase
 
