@@ -19,7 +19,7 @@ private:
     int imageAmount;                              // Amount of marker images
     int featureAmount;                            // Amount of features
     int MIN_MATCH = 6;                            // Minimum number of required matches
-    float MIN_PROBABILITY = 0.65f;                // Minimum probability of successful match
+    float MIN_PROBABILITY = 0.6f;                 // Minimum probability of successful match
     float DISTANTION_TOLERANCE = 5e-4;            // Distance tolerance between corners
 
     std::multimap<int, FeatureInfo> featureStore;          // {Image id: Feature} map
