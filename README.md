@@ -26,6 +26,8 @@ Currently have PC and Android version (JNI).
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/1.png" width="300">
 </p>
 
+<img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/multi-multi.png" width="600">
+
 ## Known issues
 * Unable to find multiple objects
 * Bad recognition when too few features have been extracted from marker`s image
