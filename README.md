@@ -21,17 +21,21 @@ Currently have PC and Android version (JNI).
 </p>
 
 ### Recognition
+#### Single
+
 <p align="center">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/2.png" width="300">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/1.png" width="300">
 </p>
+
+#### Multi
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/khoben/ar.core/master/README.md-images/multi-multi.png" width="600">
 </p>
 
 ## Known issues
-* Unable to find multiple objects
+* Unable to find multiple objects with same marker
 * Bad recognition when too few features have been extracted from marker`s image
-
+* Sometimes it calculates incorrect object coordinates on tracking phase
 
