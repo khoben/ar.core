@@ -19,7 +19,7 @@ private:
     int imageAmount;                              // Amount of marker images
     int featureAmount;                            // Amount of features
     int MIN_MATCH = 6;                            // Minimum number of required matches
-    float MIN_PROBABILITY = 0.65f;                // Minimum probability of successful match
+    float MIN_PROBABILITY = 0.6f;                 // Minimum probability of successful match
     float DISTANTION_TOLERANCE = 5e-4;            // Distance tolerance between corners
 
     std::multimap<int, FeatureInfo> featureStore;          // {Image id: Feature} map
@@ -68,20 +68,21 @@ public:
      * @return std::vector<QueryItem> Query results
      */
     std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
-
-    /**
-     * @brief Calculates probability distribution
-     * 
-     * @param numFeatures Amount of features of frame
-     * @param numMatch Amount of matches between frame and some marker
-     * @param pp Percentage of features for some marker
-     * @return float Probability
-     */
-    float probDistribution(int numFeatures, int numMatch, float pp);
-
     ~Recognition();
 
 private:
+
+    /**
+     * @brief calculates the CDF
+     *BIN(x, n, p) = n!/(x!*(n-x)!) p^x (1-p)^(n-x)
+     *
+     * @param x Random variable
+     * @param n Total number of trials
+     * @param p Probability of success of a single trial
+     * @return float CDF value
+     */
+    float binomialCDF(int x, int n, float p);
+
     /**
      * @brief Extract features from image
      * 

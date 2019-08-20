@@ -168,7 +168,10 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
     std::vector<QueryItem> queryResult;
     QueryItem queryItem;
     std::vector<FeatureVote> *voteTable;
-    int numMatch, imgId, imgFeatureNum, featureNum = keyPoints.size();
+    int numMatch;                       // amount matches between query image and database image
+    int imgId;                          // database image id
+    int imgDBFeatureNum;                // amount extracted features from database image
+    int featureNum = keyPoints.size();  // amount extracted features from query image
     float pp, prob;
     auto it = voteStorage.begin();
     while (it != voteStorage.end()) {
@@ -176,9 +179,9 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
         numMatch = voteTable->size();
         if (numMatch >= MIN_MATCH) {
             imgId = it->first;
-            imgFeatureNum = imageInfoStore[imgId].numFeatures;
-            pp = std::min((float) imgFeatureNum / amountWords, 1.f);
-            prob = probDistribution(featureNum, numMatch, pp);
+            imgDBFeatureNum = imageInfoStore[imgId].numFeatures;
+            pp = std::min((float) imgDBFeatureNum / amountWords, 1.f);
+            prob = binomialCDF(numMatch, featureNum, pp);
 
             if (prob >= MIN_PROBABILITY) {
                 queryItem.imgId = imgId;
@@ -244,26 +247,24 @@ void Recognition::clearVote() {
     }
 }
 
-float Recognition::probDistribution(int numFeatures, int numMatch, float pp) {
-    if (pp == 1)
-        return pp;
-    float prob = 0.f;
-    float logPp = log(pp);
-    float logNp = log(1 - pp);
-    float tmp;
-    for (int i = 0; i <= numMatch; ++i) {
-        tmp = 0.f;
-        for (int j = 0; j < i; ++j) {
-            tmp += log(numFeatures - j) - log(j + 1);
+float Recognition::binomialCDF(int x, int n, float p)
+{
+    if (p == 0 or p > 1 or p < 0) return 0.f;
+    // case then all points belong to same image
+    if (p == 1) p = p - 1e-6f;
+
+    float cdf = 0.f;
+    float b = 0.f;
+    float logP = log(p);
+    float logNP = log(1.f-p);
+    for (int i = 0; i <=x; ++i) {
+        if (i > 0){
+            b+=log(n-i+1) - log(i);
         }
-        tmp += logPp * i + logNp * (numFeatures - i);
-        prob += exp(tmp);
-        if (prob > 1) {
-            prob = 1;
-            break;
-        }
+        float logPMF = b + (float)i * logP + (float)(n - i)*logNP;
+        cdf += exp(logPMF);
     }
-    return prob;
+    return cdf;
 }
 
 void Recognition::findPointPair(std::vector<cv::KeyPoint> keyPoints, std::vector<FeatureVote> voteTable,
