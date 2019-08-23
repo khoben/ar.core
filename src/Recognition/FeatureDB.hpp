@@ -40,11 +40,11 @@ public:
 
     /**
      * @brief Search matches between features
-     * 
-     * @param feature Frame features
-     * @return cv::Mat 
+     *
+     * @param feature Features
+     * @param ids Vector of id matched features
      */
-    cv::Mat search(const cv::Mat &feature);
+    void search(const cv::Mat &feature, std::vector<int> &ids);
 
     /**
      * @brief Get amount of features

@@ -40,7 +40,10 @@ int Recognition::addTrackImage(const cv::Mat &img) {
     cv::Mat descriptor;
     extractFeatures(img, keyPoints, descriptor);
     std::vector<int> ids;
-    getFeatureIds(descriptor, ids);
+
+    for (int i = 0; i < descriptor.size().height; ++i) {
+        ids.push_back(i);
+    }
     int id = imageAmount;
     int status = storeImageFeatures(id, img.size(), keyPoints, ids);
 
@@ -52,14 +55,7 @@ int Recognition::addTrackImage(const cv::Mat &img) {
 int Recognition::getFeatureIds(const cv::Mat &descriptor, std::vector<int> &ids) {
     if (descriptor.empty())
         return -1;
-    int size = descriptor.rows;
-
-    cv::Mat id = vw->search(descriptor);
-
-    for (int i = 0; i < size; ++i) {
-        ids.push_back(id.at<int>(i, 0));
-    }
-
+    vw->search(descriptor, ids);
     return 0;
 }
 
@@ -139,8 +135,6 @@ Recognition::searchImageId(std::vector<cv::KeyPoint> keyPoints, std::vector<int>
 }
 
 void Recognition::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::vector<int> ids) {
-    std::multimap<int, FeatureInfo>::iterator featureIt;
-    std::map<int, std::vector<FeatureVote> *>::iterator voteIt;
     FeatureVote vote;
     FeatureInfo feature;
 

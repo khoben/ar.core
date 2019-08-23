@@ -27,24 +27,20 @@ void FeatureDB::create(int amountCluster) {
     descriptorMatcher->train();
 }
 
-cv::Mat FeatureDB::search(const cv::Mat &feature) {
+void FeatureDB::search(const cv::Mat &feature, std::vector<int> &ids) {
     int size = feature.size().height;
-
-    cv::Mat id(size, KNN_SIZE, CV_32SC1);
     std::vector<std::vector<cv::DMatch>> matchId;
     descriptorMatcher->knnMatch(feature, matchId, KNN_SIZE);
 
     for (int i = 0; i < size; ++i) {
         cv::DMatch matchM = matchId[i][0];
         cv::DMatch matchN = matchId[i][1];
-        if (matchM.distance >= matchN.distance * RADIUS) {
-            id.at<int>(i, 0) = -1;
+        if (matchM.distance < matchN.distance * RADIUS) {
+            ids.push_back(matchM.trainIdx);
         } else {
-            id.at<int>(i, 0) = matchM.trainIdx;
+            ids.push_back(-1);
         }
     }
-
-    return id;
 }
 
 int FeatureDB::size() const {
