@@ -19,15 +19,15 @@ private:
     int imageAmount;                              // Amount of marker images
     int featureAmount;                            // Amount of features
     int MIN_MATCH = 6;                            // Minimum number of required matches
-    float MIN_PROBABILITY = 0.6f;                 // Minimum probability of successful match
+    float MIN_PROBABILITY = 0.75f;                 // Minimum probability of successful match
     float DISTANTION_TOLERANCE = 5e-4;            // Distance tolerance between corners
     float MIN_PROBABILITY_SUCCESS_MATCH = MIN_PROBABILITY
             * MIN_PROBABILITY * MIN_PROBABILITY; // Minimal success match probability percentage
 
-    std::multimap<int, FeatureInfo> featureStore;          // {Image id: Feature} map
-    std::map<int, cv::KeyPoint> keyPointStore;             // {Image id: KeyPoint} map
-    std::map<int, ImageInfo> imageInfoStore;               // {Image id: ImageInfo} map
-    std::map<int, std::vector<FeatureVote> *> voteStorage; // {Image id: (KeyPoint<->Feature) binding} map
+    std::unordered_multimap<int, FeatureInfo> featureStore;          // {Feature id: Feature} map
+    std::unordered_map<int, cv::KeyPoint> keyPointStore;             // {KeyPoint id: KeyPoint} map
+    std::unordered_map<int, ImageInfo> imageInfoStore;               // {Image id: ImageInfo} map
+    std::unordered_map<int, std::vector<FeatureVote> *> voteStorage; // {Image id: (KeyPoint<->Feature) binding} map
 
 public:
     Recognition();
