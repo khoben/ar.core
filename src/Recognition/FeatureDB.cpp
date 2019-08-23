@@ -1,8 +1,6 @@
 #include "FeatureDB.hpp"
 
 FeatureDB::FeatureDB() {
-//    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
-//    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20, 10, 2));
     descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
     RADIUS = 0.8f;
 }

@@ -22,7 +22,8 @@ private:
     float MIN_PROBABILITY = 0.75f;                 // Minimum probability of successful match
     float DISTANTION_TOLERANCE = 5e-4;            // Distance tolerance between corners
     float MIN_PROBABILITY_SUCCESS_MATCH = MIN_PROBABILITY
-            * MIN_PROBABILITY * MIN_PROBABILITY; // Minimal success match probability percentage
+                                          * MIN_PROBABILITY *
+                                          MIN_PROBABILITY; // Minimal success match probability percentage
 
     std::unordered_multimap<int, FeatureInfo> featureStore;          // {Feature id: Feature} map
     std::unordered_map<int, cv::KeyPoint> keyPointStore;             // {KeyPoint id: KeyPoint} map
@@ -70,6 +71,7 @@ public:
      * @return std::vector<QueryItem> Query results
      */
     std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
+
     ~Recognition();
 
 private:

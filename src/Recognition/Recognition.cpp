@@ -4,8 +4,7 @@ Recognition::Recognition() {
     //TODO: init detector and descriptor
     vw = new FeatureDB();
     featureDetector = cv::AKAZE::create();
-    featureDetector.dynamicCast<cv::AKAZE>()->setThreshold(3e-3);
-    //    featureDetector = cv::xfeatures2d::SURF::create();
+    (featureDetector.dynamicCast<cv::AKAZE>())->setThreshold(3e-3);
     imageAmount = 0;
     featureAmount = 0;
 }
@@ -176,8 +175,6 @@ std::vector<QueryItem> Recognition::getMatchResults(std::vector<cv::KeyPoint> ke
         if (numMatch >= MIN_MATCH) {
             imgId = it->first;
             imgDBFeatureNum = imageInfoStore[imgId].numFeatures;
-//            pp = std::min((float) imgDBFeatureNum / amountWords, 1.f);
-            // >? Maybe instead imgDBFeatureNum set median value
             pp = std::min(MIN_PROBABILITY_SUCCESS_MATCH * imgDBFeatureNum / amountWords, 1.f);
             prob = binomialCDF(numMatch, featureNum, pp);
 
@@ -218,7 +215,7 @@ Recognition::filterGeomResults(std::vector<cv::KeyPoint> keyPoints, std::vector<
         voteTable = voteStorage[imgId];
         findPointPair(keyPoints, *voteTable, q, r);
         homography = cv::findHomography(cv::Mat(r), cv::Mat(q), cv::RANSAC, thresholdDist);
-        // check empty homography matrix
+
         if (!homography.empty()) {
             std::vector<cv::Point2f> posePoint = CvUtils::transformMarkerCoordToObjectCoord(imageInfoStore[imgId].size,
                                                                                             homography);
@@ -245,21 +242,18 @@ void Recognition::clearVote() {
     }
 }
 
-float Recognition::binomialCDF(int x, int n, float p)
-{
+float Recognition::binomialCDF(int x, int n, float p) {
     if (p == 0 or p > 1 or p < 0) return 0.f;
-    // case then all points belong to same image
-    if (p == 1) p = p - 1e-6f;
 
     float cdf = 0.f;
     float b = 0.f;
     float logP = log(p);
-    float logNP = log(1.f-p);
-    for (int i = 0; i <=x; ++i) {
-        if (i > 0){
-            b+=log(n-i+1) - log(i);
+    float logNP = log(1.f - p);
+    for (int i = 0; i <= x; ++i) {
+        if (i > 0) {
+            b += log(n - i + 1) - log(i);
         }
-        float logPMF = b + (float)i * logP + (float)(n - i)*logNP;
+        float logPMF = b + (float) i * logP + (float) (n - i) * logNP;
         cdf += exp(logPMF);
     }
     return cdf;
