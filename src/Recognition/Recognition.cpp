@@ -142,12 +142,13 @@ void Recognition::voteQueryFeatures(std::vector<cv::KeyPoint> keyPoints, std::ve
 
     for (int i = 0; i < size; ++i) {
         if (ids[idsIdx] >= 0) {
-            featureIt = featureStore.find(ids[idsIdx]);
-            while (featureIt != featureStore.end() && featureIt->first == ids[idsIdx]) {
+            auto featureItRange = featureStore.equal_range(ids[idsIdx]);
+            auto featureIt = featureItRange.first;
+            while (featureIt != featureItRange.second) {
                 feature = featureIt->second;
                 vote.featureId = i;
                 vote.keyPointId = feature.keyPointId;
-                voteIt = voteStorage.find(feature.imgId);
+                auto voteIt = voteStorage.find(feature.imgId);
                 if (voteIt != voteStorage.end()) {
                     voteIt->second->push_back(vote);
                 }
