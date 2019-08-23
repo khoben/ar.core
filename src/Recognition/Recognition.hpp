@@ -26,9 +26,9 @@ private:
                                           MIN_PROBABILITY; // Minimal success match probability percentage
 
     std::unordered_multimap<int, FeatureInfo> featureStore;          // {Feature id: Feature} map
-    std::unordered_map<int, cv::KeyPoint> keyPointStore;             // {KeyPoint id: KeyPoint} map
-    std::unordered_map<int, ImageInfo> imageInfoStore;               // {Image id: ImageInfo} map
-    std::unordered_map<int, std::vector<FeatureVote> *> voteStorage; // {Image id: (KeyPoint<->Feature) binding} map
+    std::vector<cv::KeyPoint> keyPointStore;                         // KeyPoint storage
+    std::vector<ImageInfo> imageInfoStore;                           // ImageInfo storage
+    std::vector<std::vector<FeatureVote> *> voteStorage;             // (KeyPoint<->Feature) binding storage
 
 public:
     Recognition();
