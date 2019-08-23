@@ -4,8 +4,7 @@ FeatureDB::FeatureDB() {
 //    descriptorMatcher = cv::DescriptorMatcher::create("FlannBased");
 //    descriptorMatcher = new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(20, 10, 2));
     descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
-//    RADIUS = 0.2;
-    RADIUS = 0.9f;
+    RADIUS = 0.8f;
 }
 
 void FeatureDB::addFeatures(const cv::Mat &feature) {
