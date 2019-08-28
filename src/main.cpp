@@ -45,8 +45,6 @@ int main(int, char **) {
     ar->add(mat_1);
     ar->add(mat_3);
     ar->add(mat_4);
-    ar->create();
-
     // start AR process
 
     single(mat_2);
