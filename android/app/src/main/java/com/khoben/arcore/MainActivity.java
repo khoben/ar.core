@@ -10,7 +10,6 @@ import android.view.View;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCamera2View;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -86,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         OpenCVJNI.addMarker(mat_2.getNativeObjAddr());
         OpenCVJNI.addMarker(mat_3.getNativeObjAddr());
         OpenCVJNI.addMarker(mat_1.getNativeObjAddr());
-        OpenCVJNI.createMarkerDB();
     }
 
     public void onPause() {
@@ -118,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Log.i(TAG, "started");
         frame = new Mat(height, width, CvType.CV_8UC4);
         processedFrame = new Mat(height, width, CvType.CV_8UC4);
-        OpenCVJNI.initAR(frame.getNativeObjAddr());
+        OpenCVJNI.init(frame.getNativeObjAddr());
         loadMarkers();
     }
 
@@ -132,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Log.i(TAG, "on frame");
         frame = inputFrame.rgba();
-        OpenCVJNI.startAR(frame.getNativeObjAddr(), processedFrame.getNativeObjAddr());
+        OpenCVJNI.start(frame.getNativeObjAddr(), processedFrame.getNativeObjAddr());
         return processedFrame;
     }
 }

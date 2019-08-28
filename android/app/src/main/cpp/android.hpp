@@ -72,13 +72,6 @@ void init(Mat frame);
 int addMarker(cv::Mat img);
 
 /**
- * @brief Create marker 'database'
- * 
- * @return int 
- */
-int createMarkerDB();
-
-/**
  * @brief Process frame, find matching in marker 'database'
  * 
  * @param frame Input frame

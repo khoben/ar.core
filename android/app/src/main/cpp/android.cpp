@@ -31,13 +31,6 @@ int addMarker(cv::Mat img) {
     return 0;
 }
 
-int createMarkerDB() {
-    if (ar == nullptr)
-        return -1;
-    ar->create();
-    return 0;
-}
-
 int process(Mat frame, Mat &out) {
     if (ar == nullptr)
         return -1;
