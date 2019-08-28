@@ -13,8 +13,7 @@ std::vector<QueryItem> AR::process(cv::Mat frame) {
 
 }
 
-int AR::addAndCreate(std::vector<cv::Mat> imgs) {
-    recognitionInstance->addAndCreateBagOfVisualWords(imgs);
+int AR::addAll(std::vector<cv::Mat> imgs) {
     for (const auto &img: imgs) {
         recognitionInstance->addTrackImage(img);
     }
@@ -22,15 +21,10 @@ int AR::addAndCreate(std::vector<cv::Mat> imgs) {
 }
 
 int AR::add(cv::Mat img) {
-    recognitionInstance->addVisualWord(img);
     recognitionInstance->addTrackImage(img);
     return 0;
 }
 
-int AR::create() {
-    recognitionInstance->createBagOfVisualWords();
-    return 0;
-}
 
 bool AR::keepTracking(const cv::Mat &frame) {
     return trackingInstance->keepTracking(frame);

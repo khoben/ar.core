@@ -51,12 +51,12 @@ public:
     Tracking *getTrackingInstance() { return trackingInstance; }
 
     /**
-     * @brief Add and create marker image objects
+     * @brief Add marker image objects
      * 
      * @param imgs marker images
      * @return int 
      */
-    int addAndCreate(std::vector<cv::Mat> imgs);
+    int addAll(std::vector<cv::Mat> imgs);
 
     /**
      * @brief Add marker image
@@ -65,13 +65,6 @@ public:
      * @return int 
      */
     int add(cv::Mat img);
-
-    /**
-     * @brief Create tracking markers
-     * 
-     * @return int 
-     */
-    int create();
 
     ~AR();
 };
