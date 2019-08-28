@@ -35,13 +35,6 @@ public:
     Tracking();
 
     /**
-     * @brief Initializes new tracking instance
-     * 
-     * @return Tracking* - instance
-     */
-    static Tracking *create();
-
-    /**
      * @brief Start tracking
      * 
      * @param frame - frame
