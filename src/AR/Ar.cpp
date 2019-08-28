@@ -4,7 +4,7 @@ AR::~AR() = default;
 
 AR::AR() {
     recognitionInstance = new Recognition();
-    trackingInstance = Tracking::create();
+    trackingInstance = new Tracking();
 }
 
 
