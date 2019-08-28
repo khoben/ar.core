@@ -8,8 +8,6 @@ file(GLOB_RECURSE SOURCE_FILES
         "src/*.cpp"
         )
 
-list(FILTER SOURCE_FILES EXCLUDE REGEX ".*android\\.[cpp|hpp]")
-
 set(OpenCV_DIR "D:\\opencv-4.1.1\\build\\install")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 

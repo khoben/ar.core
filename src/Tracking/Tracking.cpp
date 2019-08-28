@@ -8,10 +8,6 @@ Tracking::Tracking() {
     MIN_FEATURE_POINTS = 6;
 }
 
-Tracking *Tracking::create() {
-    return new Tracking();
-}
-
 void Tracking::start(const cv::Mat &frame, const ObjectPosition &pos) {
     frame.copyTo(prevFrame);
     objectPosition = pos;

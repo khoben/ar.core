@@ -1,6 +1,7 @@
 #include "opencv2/opencv.hpp"
 #include "AR/Ar.hpp"
 #include <climits>
+#include <chrono>
 
 using namespace cv;
 
@@ -44,13 +45,10 @@ int main(int, char **) {
     ar->add(mat_1);
     ar->add(mat_3);
     ar->add(mat_4);
-    ar->create();
-
     // start AR process
 
     single(mat_2);
 //    start();
-
     return 0;
 }
 
@@ -64,6 +62,7 @@ cv::Mat makeQueryMat(cv::Size size, int max_size, int &scale) {
 }
 
 int single(cv::Mat frame) {
+    auto startTime = std::chrono::steady_clock::now();
     cv::Mat gray, query;
     int scale = 1;
     query = makeQueryMat(frame.size(), maxFrameSize, scale);
@@ -76,7 +75,7 @@ int single(cv::Mat frame) {
     cv::resize(gray, query, query.size());
     std::vector<QueryItem> result = ar->process(query);
     if (!result.empty()) {
-        for (const auto& r: result) {
+        for (const auto &r: result) {
             std::vector<cv::Point2f> objPose;
 
             std::cout << "Matched: imgId:" << r.imgId << std::endl;
@@ -96,8 +95,10 @@ int single(cv::Mat frame) {
             cv::putText(frame, std::to_string(imgId), center, OPENCV_FONT, 3, val, 3);
         }
     }
+    std::cout << "Elapsed time: " << (std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - startTime)).count() << "ms" << std::endl;
     cv::namedWindow("AR", WINDOW_NORMAL);
-    cv::resizeWindow("AR", 600,600);
+    cv::resizeWindow("AR", 600, 600);
     cv::imshow("AR", frame);
     cv::waitKey();
     return 0;
@@ -155,7 +156,7 @@ int start() {
             cv::putText(frame, std::to_string(imgId), center, OPENCV_FONT, 6, val, 6);
         }
         cv::namedWindow("AR", WINDOW_NORMAL);
-        cv::resizeWindow("AR", 600,600);
+        cv::resizeWindow("AR", 600, 600);
         cv::imshow("AR", frame);
         if (waitKey(1) == 27)
             break; //quit on ESC button

@@ -501,6 +501,32 @@ public:
         }
         return ret_vec;
     }
+
+    /**
+     * @brief calculates the CDF
+     *BIN(x, n, p) = n!/(x!*(n-x)!) p^x (1-p)^(n-x)
+     *
+     * @param x Random variable
+     * @param n Total number of trials
+     * @param p Probability of success of a single trial
+     * @return float CDF value
+     */
+    static float binomialCDF(int x, int n, float p) {
+        if (p == 0 or p > 1 or p < 0) return 0.f;
+
+        float cdf = 0.f;
+        float b = 0.f;
+        float logP = log(p);
+        float logNP = log(1.f - p);
+        for (int i = 0; i <= x; ++i) {
+            if (i > 0) {
+                b += log(n - i + 1) - log(i);
+            }
+            float logPMF = b + (float) i * logP + (float) (n - i) * logNP;
+            cdf += exp(logPMF);
+        }
+        return cdf;
+    }
 };
 
 #endif // __CVUTILS__
