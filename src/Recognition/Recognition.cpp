@@ -18,4 +18,10 @@ std::vector<QueryItem> Recognition::queryImage(const cv::Mat &img, int amountRes
 
 Recognition::~Recognition() {
 
+int
+Recognition::addTrackImage(const cv::Mat &descriptors, const std::vector<cv::KeyPoint> &keyPoints,
+                           const cv::Size &size) {
+
+    markerlessDb->add(descriptors, keyPoints, size);
+    return 0;
 }
