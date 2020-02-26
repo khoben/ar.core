@@ -527,6 +527,22 @@ public:
         }
         return cdf;
     }
+
+    static cv::Mat decodeMat(const std::string &encoded) {
+        std::string dec_jpg = base64_decode(encoded);
+        std::vector<uchar> data(dec_jpg.begin(), dec_jpg.end());
+        cv::Mat img = cv::imdecode(cv::Mat(data), 0);
+        return img;
+    }
+
+    static std::string encodeMat(const cv::Mat &img) {
+        std::vector<uchar> buf;
+        cv::imencode(".jpg", img, buf);
+        auto *enc_msg = reinterpret_cast<unsigned char *>(buf.data());
+        std::string encoded = base64_encode(enc_msg, buf.size());
+        return encoded;
+    }
+
 };
 
 #endif // __CVUTILS__
