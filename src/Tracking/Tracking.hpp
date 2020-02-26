@@ -31,6 +31,7 @@ private:
     /* calcOpticalFlowPyrLK props */
     std::vector<uchar> opticalFlowStatus; // status of tracking points
     /* ------------------- */
+    std::vector<cv::Mat> prevPyr, nextPyr;
 public:
     Tracking();
 
