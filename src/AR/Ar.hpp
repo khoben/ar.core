@@ -24,7 +24,7 @@ public:
      * @param frame Frame
      * @return std::vector<QueryItem> Result
      */
-    std::vector<QueryItem> process(cv::Mat frame);
+    std::vector<QueryItem> process(const cv::Mat &frame);
 
     /**
      * @brief Start tracking process on detected marker image
@@ -56,7 +56,7 @@ public:
      * @param imgs marker images
      * @return int 
      */
-    int addAll(std::vector<cv::Mat> imgs);
+    int addAll(const std::vector<cv::Mat> &imgs);
 
     /**
      * @brief Add marker image
@@ -64,7 +64,10 @@ public:
      * @param img Marker image
      * @return int 
      */
-    int add(cv::Mat img);
+    int add(const cv::Mat &img);
+
+    int add(const cv::Mat &descriptors,
+            const std::vector<cv::KeyPoint> &keyPoints, const cv::Size &size);
 
     ~AR();
 };

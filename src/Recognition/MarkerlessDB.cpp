@@ -13,8 +13,7 @@ void MarkerlessDB::addFeatures(const cv::Mat &feature) {
     descriptorMatcher->add(std::vector<cv::Mat>{feature});
 }
 
-MarkerlessDB::~MarkerlessDB() {
-}
+MarkerlessDB::~MarkerlessDB() = default;
 
 
 int MarkerlessDB::size() const {
@@ -27,14 +26,19 @@ int MarkerlessDB::size() const {
     return num;
 }
 
+void MarkerlessDB::add(const cv::Mat &descriptors, const std::vector<cv::KeyPoint> &keyPoints,
+                       const cv::Size &size) {
+    addFeatures(descriptors);
+    int id = markerAmount;
+    markers.push_back(new MarkerlessTrackable(id, descriptors, keyPoints, size));
+    markerAmount++;
+}
+
 void MarkerlessDB::add(const cv::Mat &image) {
     std::vector<cv::KeyPoint> keyPoints;
     cv::Mat descriptor;
     extractFeatures(image, keyPoints, descriptor);
-    addFeatures(descriptor);
-    int id = markerAmount;
-    markers.push_back(new MarkerlessTrackable(id, descriptor, keyPoints, image.size()));
-    markerAmount++;
+    add(descriptor, keyPoints, image.size());
 }
 
 void MarkerlessDB::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor) {
@@ -42,7 +46,7 @@ void MarkerlessDB::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint>
 }
 
 std::vector<QueryItem>
-MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
+MarkerlessDB::match(const cv::Mat &queryImage, int minNumMatch, float minProbability) {
     std::vector<QueryItem> results;
     QueryItem result;
     // Extract features from query image
@@ -71,7 +75,7 @@ MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
         }
     }
 
-    int thresholdDist = (int) round(sqrt(5e-4f * queryImage.size().width * queryImage.size().height / M_PI));
+    int thresholdDist = (int) round(sqrt(5e-3f * queryImage.size().width * queryImage.size().height / M_PI) + 0.5);
     float pp, prob;
     int markerIdx, numMatches;
     cv::Mat homography;
@@ -122,5 +126,7 @@ MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
 
     return results;
 }
+
+
 
 

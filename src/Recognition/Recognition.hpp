@@ -27,6 +27,9 @@ public:
      */
     int addTrackImage(const cv::Mat &img);
 
+    int addTrackImage(const cv::Mat &descriptors,
+                      const std::vector<cv::KeyPoint> &keyPoints, const cv::Size &size);
+
     /**
      * @brief Make a query 
      * 

@@ -1,8 +1,6 @@
 #include "MarkerlessTrackable.hpp"
 
-MarkerlessTrackable::~MarkerlessTrackable() {
-
-}
+MarkerlessTrackable::~MarkerlessTrackable() = default;
 
 MarkerlessTrackable::MarkerlessTrackable(const int id, const cv::Mat &descriptors,
                                          const std::vector<cv::KeyPoint> &keyPoints, const cv::Size &size)

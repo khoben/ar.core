@@ -2,6 +2,9 @@
 #ifndef AR_CORE_MARKERLESSDB_HPP
 #define AR_CORE_MARKERLESSDB_HPP
 
+#define _USE_MATH_DEFINES
+
+#include <cmath>
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include "../Utils/CvUtils.hpp"
@@ -23,10 +26,25 @@ private:
 public:
     MarkerlessDB();
 
+    /**
+     * @brief Extract and add feature to database
+     *
+     * @param image
+     */
     void add(const cv::Mat &image);
 
+    /**
+     * @brief Add feature to database
+     *
+     * @param descriptors
+     * @param keyPoints
+     * @param size
+     */
+    void add(const cv::Mat &descriptors,
+             const std::vector<cv::KeyPoint> &keyPoints, const cv::Size &size);
+
     std::vector<QueryItem>
-    match(cv::Mat queryImage, int minNumMatch = 10, float minProbability = 0.75f);
+    match(const cv::Mat &queryImage, int minNumMatch = 10, float minProbability = 0.75f);
 
     /**
      * @brief Extract features from image
