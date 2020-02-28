@@ -1,14 +1,14 @@
 #include <iostream>
-#include "Tracking.hpp"
+#include "Tracker.hpp"
 
-Tracking::Tracking() {
+Tracker::Tracker() {
     maxAmountCorners = 80;
     minQualityCorners = .1;
     minDistanceCorners = 5;
     MIN_FEATURE_POINTS = 6;
 }
 
-void Tracking::start(const cv::Mat &frame, const ObjectPosition &pos) {
+void Tracker::start(const cv::Mat &frame, const Boundary &pos) {
     frame.copyTo(prevFrame);
     objectPosition = pos;
     cv::Mat mask = CvUtils::createMask(frame.size(), pos);
@@ -18,7 +18,7 @@ void Tracking::start(const cv::Mat &frame, const ObjectPosition &pos) {
     opticalFlowStatus.clear();
 }
 
-bool Tracking::keepTracking(const cv::Mat &frame) {
+bool Tracker::keepTracking(const cv::Mat &frame) {
     std::vector<cv::Point2f> nextCorners;
     std::vector<float> err;
 
@@ -47,9 +47,6 @@ bool Tracking::keepTracking(const cv::Mat &frame) {
         }
     }
 
-    // check track status
-//    int found = std::count(opticalFlowStatus.begin(), opticalFlowStatus.end(), 1);
-//    std::cout << "found: " << found << std::endl;
     // enough tracking points
     if (found < MIN_FEATURE_POINTS) {
         return false;
@@ -61,8 +58,8 @@ bool Tracking::keepTracking(const cv::Mat &frame) {
         } else {
             // Calc object position on frame
             std::vector<cv::Point2f> nextObjPos;
-            nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
-//            cv::perspectiveTransform(objectPosition, nextObjPos, homography);
+//            nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
+            cv::perspectiveTransform(objectPosition, nextObjPos, homography);
 //            cv::Size size = prevFrame.size();
 
             // Check if points outside frame
@@ -99,5 +96,5 @@ bool Tracking::keepTracking(const cv::Mat &frame) {
     return true;
 }
 
-Tracking::~Tracking()
+Tracker::~Tracker()
 = default;
