@@ -1,48 +1,51 @@
-#include "MarkerlessDB.hpp"
+#include "MarkerlessStorage.hpp"
 
-MarkerlessDB::MarkerlessDB() {
+MarkerlessStorage::MarkerlessStorage() {
     featureDetector = cv::AKAZE::create();
     (featureDetector.dynamicCast<cv::AKAZE>())->setThreshold(3e-3);
-    descriptorMatcher = new cv::BFMatcher(cv::NORM_HAMMING);
+    descriptorMatcher = cv::BFMatcher::create(cv::NORM_HAMMING);
     markerAmount = 0;
-    featureAmount = 0;
     RADIUS = 0.8f;
 }
 
-void MarkerlessDB::addFeatures(const cv::Mat &feature) {
+void MarkerlessStorage::addFeatures(const cv::Mat &feature) {
     descriptorMatcher->add(std::vector<cv::Mat>{feature});
 }
 
-MarkerlessDB::~MarkerlessDB() {
-}
+MarkerlessStorage::~MarkerlessStorage() = default;
 
 
-int MarkerlessDB::size() const {
+int MarkerlessStorage::size() const {
     int num = 0;
     std::for_each(markers.begin(), markers.end(),
-                  [&num](MarkerlessTrackable *e) {
+                  [&num](auto const &e) {
                       num += e->numFeatures;
                   }
     );
     return num;
 }
 
-void MarkerlessDB::add(const cv::Mat &image) {
-    std::vector<cv::KeyPoint> keyPoints;
-    cv::Mat descriptor;
-    extractFeatures(image, keyPoints, descriptor);
-    addFeatures(descriptor);
+void MarkerlessStorage::add(const cv::Mat &descriptors, const std::vector<cv::KeyPoint> &keyPoints,
+                            const cv::Size &size) {
+    addFeatures(descriptors);
     int id = markerAmount;
-    markers.push_back(new MarkerlessTrackable(id, descriptor, keyPoints, image.size()));
+    markers.push_back(std::make_unique<MarkerlessTrackable>(id, descriptors, keyPoints, size));
     markerAmount++;
 }
 
-void MarkerlessDB::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor) {
+void MarkerlessStorage::add(const cv::Mat &image) {
+    std::vector<cv::KeyPoint> keyPoints;
+    cv::Mat descriptor;
+    extractFeatures(image, keyPoints, descriptor);
+    add(descriptor, keyPoints, image.size());
+}
+
+void MarkerlessStorage::extractFeatures(const cv::Mat &img, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptor) {
     featureDetector->detectAndCompute(img, cv::noArray(), keyPoints, descriptor);
 }
 
 std::vector<QueryItem>
-MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
+MarkerlessStorage::match(const cv::Mat &queryImage, int minNumMatch, float minProbability) {
     std::vector<QueryItem> results;
     QueryItem result;
     // Extract features from query image
@@ -59,7 +62,7 @@ MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
 
     // iterate over all available markers
     // and find matches
-    for (auto marker: markers) {
+    for (const auto &marker: markers) {
         std::vector<std::vector<cv::DMatch>> matchId;
         descriptorMatcher->knnMatch(descriptors, marker->descriptors, matchId, KNN_SIZE);
         for (int i = 0; i < size; ++i) {
@@ -71,7 +74,7 @@ MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
         }
     }
 
-    int thresholdDist = (int) round(sqrt(5e-4f * queryImage.size().width * queryImage.size().height / M_PI));
+    int thresholdDist = (int) round(sqrt(5e-3f * queryImage.size().width * queryImage.size().height / M_PI) + 0.5);
     float pp, prob;
     int markerIdx, numMatches;
     cv::Mat homography;
@@ -107,6 +110,7 @@ MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
                         result.probability = prob;
                         result.homography = homography;
                         result.objPose = posePoint;
+                        result.status = DETECTED;
                         results.push_back(result);
                     }
                 }
@@ -116,11 +120,18 @@ MarkerlessDB::match(cv::Mat queryImage, int minNumMatch, float minProbability) {
         q.clear();
         markerIt++;
     }
-    std::sort(results.begin(), results.end(), [](const QueryItem &a, const QueryItem &b) -> bool {
-        return a.probability > b.probability;
-    });
+
+    // desc sort by probability value
+    if (results.size() > 1)
+        std::sort(results.begin(), results.end(), std::greater<>());
 
     return results;
 }
+
+std::vector<QueryItem> MarkerlessStorage::match(const cv::Mat &queryImage) {
+    return match(queryImage, MIN_NUM_MATCH, MIN_PROBABILITY);
+}
+
+
 
 

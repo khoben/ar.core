@@ -3,15 +3,37 @@
 #ifndef __CVUTILS__
 #define __CVUTILS__
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #include <vector>
+#include "base64/base64.hpp"
 
-// [0]:Top-Left
-// [1]:Bottom-Left
-// [2]:Bottom-Right
-// [3]:Top-Right
-typedef std::vector<cv::Point2f> ObjectPosition;
+/*
+ * Boundary described by 4 points
+ *
+ * [0]: Top-Left
+ * [1]: Bottom-Left
+ * [2]: Bottom-Right
+ * [3]: Top-Right
+ */
+typedef std::vector<cv::Point2f> Boundary;
+
+/**
+ * Masking Strategy
+ */
+enum MaskingStrategy {
+    MASK_FAST,      // simply mask roi
+    MASK_ACCURACY   // mask with polygon
+};
+
+/**
+ * QueryItemStatus
+ */
+enum QueryItemStatus {
+    NONE,       // default state
+    DETECTED,   // has been detected on frame
+    TRACKED,    // detected => tracked
+    LOST        // if tracked was lost
+};
 
 /**
  * @brief Store query results
@@ -23,34 +45,18 @@ struct QueryItem {
     double probability;               // match probability
     int amountMatched;                // amount feature matches
     std::vector<cv::Point2f> objPose; // position of object
+    std::vector<cv::Point2f> scaledObjPose; // scaled position of object
     cv::Mat homography;               // homography matrix
-};
+    QueryItemStatus status = NONE;           // status
 
-/**
- * @brief Feature id <-> KeyPoint id pair
- * 
- */
-struct FeatureVote {
-    int featureId;
-    int keyPointId;
-};
 
-/**
- * @brief Image id <-> KeyPoint id pair
- * 
- */
-struct FeatureInfo {
-    int keyPointId;
-    int imgId;
-};
+    inline bool operator<(const QueryItem &a) {
+        return (probability < a.probability);
+    }
 
-/**
- * @brief Image info
- * 
- */
-struct ImageInfo {
-    int numFeatures;
-    cv::Size size;
+    inline bool operator>(const QueryItem &a) {
+        return (probability > a.probability);
+    }
 };
 
 /**
@@ -60,15 +66,44 @@ struct ImageInfo {
 class CvUtils {
 public:
     /**
-     * @brief Create a Mask object
+     * @brief Create a mask with specified boundary
      * 
-     * @param size - size of frame
-     * @param pose - pose of traking object
-     * @return cv::Mat - Mask object
+     * @param size - size of source mat
+     * @param boundary - boundary of mask
+     * @param strategy - strategy of masking
+     * @param color - mask color (default = 255)
+     * @return cv::Mat - masked mat
      */
-    static cv::Mat createMask(cv::Size size, const ObjectPosition &pose) {
+    static cv::Mat createMask(const cv::Size &size, const Boundary &boundary, MaskingStrategy strategy = MASK_FAST,
+                              cv::Scalar color = cv::Scalar(255)) {
         cv::Mat mask = cv::Mat::zeros(size, CV_8UC1);
-        cv::fillConvexPoly(mask, convertVecType<cv::Point>(pose), cv::Scalar(255), 16, 0);
+        if (strategy == MASK_ACCURACY)
+            cv::fillConvexPoly(mask, convertVecType<cv::Point>(boundary), color, cv::LINE_AA, 0);
+        else if (strategy == MASK_FAST) {
+            float x_min = FLT_MAX, y_min = FLT_MAX,
+                    x_max = 0, y_max = 0;
+            for (const auto &b: boundary) {
+                if (b.x > x_max)
+                    x_max = b.x;
+
+                if (b.x < x_min)
+                    x_min = b.x;
+
+                if (b.y > y_max)
+                    y_max = b.y;
+
+                if (b.y < y_min)
+                    y_min = b.y;
+            }
+
+            x_min = std::max(0.f, std::min(x_min, (float) size.width));
+            y_min = std::max(0.f, std::min(y_min, (float) size.height));
+
+            x_max = std::min((float) size.width, std::max(x_max, 0.f));
+            y_max = std::min((float) size.height, std::max(y_max, 0.f));
+
+            mask(cv::Rect(x_min, y_min, x_max - x_min, y_max - y_min)) = color;
+        }
         return mask;
     }
 
@@ -78,11 +113,11 @@ public:
      * @param v Point`s vector
      * @return cv::Mat Mat object
      */
-    static cv::Mat pointsToMat(const ObjectPosition &v) {
-        int size = v.size();
+    static cv::Mat pointsToMat(const Boundary &v) {
+        size_t size = v.size();
         cv::Mat ret(3, size, CV_64FC1);
 
-        for (int i = 0; i < size; ++i) {
+        for (size_t i = 0; i < size; ++i) {
             ret.at<double>(0, i) = (double) v[i].x;
             ret.at<double>(1, i) = (double) v[i].y;
             ret.at<double>(2, i) = 1.;
@@ -118,7 +153,7 @@ public:
     static bool ptsInsideFrame(const cv::Size &size, const std::vector<cv::Point2f> &pts) {
         return pts.end() == std::find_if(pts.begin(), pts.end(),
                                          [size](const cv::Point2f &p) -> bool {
-                                             return p.x < 0 or p.x > size.width or p.y < 0 or p.y > size.height;
+                                             return p.x < 0 || p.x > size.width || p.y < 0 || p.y > size.height;
                                          });
     }
 
@@ -144,19 +179,20 @@ public:
 
     /***************HELP FUNCTION FOR PROVERECT(PTS)*****************/
     static bool isOrthogonal(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c) {
-        return ((b.x - a.x) * (b.x - c.x) +
-                (b.y - a.y) * (b.y - c.y)) == 0;
+        const float eps = 1e-8;
+        return fabs((b.x - a.x) * (b.x - c.x) +
+                    (b.y - a.y) * (b.y - c.y)) < eps;
     }
 
     static bool isRect(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d) {
-        return isOrthogonal(a, b, c) and
-               isOrthogonal(b, c, d) and
+        return isOrthogonal(a, b, c) &&
+               isOrthogonal(b, c, d) &&
                isOrthogonal(c, d, a);
     }
 
     static bool isRectAnyOrder(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d) {
-        return isRect(a, b, c, d) or
-               isRect(b, c, a, d) or
+        return isRect(a, b, c, d) ||
+               isRect(b, c, a, d) ||
                isRect(c, a, b, d);
     }
     /*******************************************************************/
@@ -172,15 +208,8 @@ public:
         if (pts.size() != 4)
             return false;
 
-        const float eps = 1e-5;
-        for (cv::Point2f &i : pts) {
-            if (fabs(i.x) < eps)
-                i.x = 0;
-            if (fabs(i.y) < eps)
-                i.y = 0;
-        }
-
         return isRectAnyOrder(pts[0], pts[1], pts[2], pts[3]);
+
     }
 
     /**
@@ -235,7 +264,7 @@ public:
      * @return false 
      */
     static bool onSegment(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
-        return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) and
+        return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
                q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
     }
 
@@ -344,13 +373,13 @@ public:
     static int
     amountGoodPtInsideRect(const std::vector<cv::Point2f> &pts, const std::vector<cv::Point2f> &corners,
                            std::vector<uchar> &status) {
-        if (pts.size() != status.size() or corners.size() != 4)
+        if (pts.size() != status.size() || corners.size() != 4)
             return -1;
 
         int count = 0, idx = 0;
         std::for_each(pts.begin(), pts.end(), [&idx, &count, &corners, &status](const cv::Point2f &pt) {
             if (status[idx] == 1) {
-                bool isInside = isInsideRect(corners, pt);
+                bool isInside = cv::pointPolygonTest(corners, pt, false) != -1;
                 if (isInside)
                     count++;
                 else
@@ -415,9 +444,9 @@ public:
         }
 
         float val[4];
-        int size = points.size();
+        size_t size = points.size();
         int count = 0;
-        for (int j = 0; j < size; j++) {
+        for (size_t j = 0; j < size; j++) {
             if (status[j] > 0) {
                 for (i = 0; i < 4; i++) {
                     val[i] = a[i] * points[j].x + b[i] * points[j].y + c[i];
@@ -440,7 +469,7 @@ public:
      * @param homo Homography matrix
      * @return std::vector<cv::Point2f> Object coordinates
      */
-    static std::vector<cv::Point2f> calcObjPos(const ObjectPosition &pos, cv::Mat &homo) {
+    static std::vector<cv::Point2f> calcObjPos(const Boundary &pos, cv::Mat &homo) {
         std::vector<cv::Point2f> position;
         if (pos.empty())
             return position;
@@ -465,7 +494,7 @@ public:
      * @param mat Homography matrix
      * @return std::vector<cv::Point2f> Coordinates of detected object
      */
-    static std::vector<cv::Point2f> transformMarkerCoordToObjectCoord(cv::Size size, cv::Mat mat) {
+    static std::vector<cv::Point2f> transformMarkerCoordToObjectCoord(const cv::Size &size, const cv::Mat &mat) {
         std::vector<cv::Point2f> points;
         float width = (float) (size.width) - 1;
         float height = (float) (size.height) - 1;
@@ -512,7 +541,7 @@ public:
      * @return float CDF value
      */
     static float binomialCDF(int x, int n, float p) {
-        if (p == 0 or p > 1 or p < 0) return 0.f;
+        if (p == 0 || p > 1 || p < 0) return 0.f;
 
         float cdf = 0.f;
         float b = 0.f;
@@ -527,6 +556,22 @@ public:
         }
         return cdf;
     }
+
+    static cv::Mat decodeMat(const std::string &encoded) {
+        std::string dec_jpg = base64_decode(encoded);
+        std::vector<uchar> data(dec_jpg.begin(), dec_jpg.end());
+        cv::Mat img = cv::imdecode(cv::Mat(data), 0);
+        return img;
+    }
+
+    static std::string encodeMat(const cv::Mat &img) {
+        std::vector<uchar> buf;
+        cv::imencode(".jpg", img, buf);
+        auto *enc_msg = reinterpret_cast<unsigned char *>(buf.data());
+        std::string encoded = base64_encode(enc_msg, buf.size());
+        return encoded;
+    }
+
 };
 
 #endif // __CVUTILS__

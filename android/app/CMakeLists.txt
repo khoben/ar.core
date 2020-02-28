@@ -23,17 +23,16 @@ include_directories(
         ${OpenCV_DIR}/include/
         ${LIB_SRC_DIR}/src/)
 
+file(GLOB_RECURSE PROJECT_CXX_FILES
+        ${LIB_SRC_DIR}/src/*.cpp
+        ${LIB_SRC_DIR}/src/*.hpp
+        )
+
+list(FILTER PROJECT_CXX_FILES EXCLUDE REGEX ".+main\\.cpp")
+
 add_library(ar_core-lib
         SHARED
-        ${LIB_SRC_DIR}/src/Utils/CvUtils.hpp
-        ${LIB_SRC_DIR}/src/Recognition/Recognition.hpp
-        ${LIB_SRC_DIR}/src/Tracking/Tracking.hpp
-        ${LIB_SRC_DIR}/src/Recognition/Recognition.cpp
-        ${LIB_SRC_DIR}/src/Tracking/Tracking.cpp
-        ${LIB_SRC_DIR}/src/AR/Ar.cpp
-        ${LIB_SRC_DIR}/src/AR/Ar.hpp
-        ${LIB_SRC_DIR}/src/Recognition/FeatureDB.hpp
-        ${LIB_SRC_DIR}/src/Recognition/FeatureDB.cpp
+        ${PROJECT_CXX_FILES}
         src/main/cpp/android.hpp
         src/main/cpp/android.cpp
         src/main/cpp/native-lib.cpp
