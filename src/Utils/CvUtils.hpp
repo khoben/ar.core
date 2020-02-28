@@ -7,11 +7,33 @@
 #include <vector>
 #include "base64/base64.hpp"
 
-// [0]:Top-Left
-// [1]:Bottom-Left
-// [2]:Bottom-Right
-// [3]:Top-Right
-typedef std::vector<cv::Point2f> ObjectPosition;
+/*
+ * Boundary described by 4 points
+ *
+ * [0]: Top-Left
+ * [1]: Bottom-Left
+ * [2]: Bottom-Right
+ * [3]: Top-Right
+ */
+typedef std::vector<cv::Point2f> Boundary;
+
+/**
+ * Masking Strategy
+ */
+enum MaskingStrategy {
+    MASK_FAST,      // simply mask roi
+    MASK_ACCURACY   // mask with polygon
+};
+
+/**
+ * QueryItemStatus
+ */
+enum QueryItemStatus {
+    NONE,       // default state
+    DETECTED,   // has been detected on frame
+    TRACKED,    // detected => tracked
+    LOST        // if tracked was lost
+};
 
 /**
  * @brief Store query results
@@ -23,34 +45,18 @@ struct QueryItem {
     double probability;               // match probability
     int amountMatched;                // amount feature matches
     std::vector<cv::Point2f> objPose; // position of object
+    std::vector<cv::Point2f> scaledObjPose; // scaled position of object
     cv::Mat homography;               // homography matrix
-};
+    QueryItemStatus status = NONE;           // status
 
-/**
- * @brief Feature id <-> KeyPoint id pair
- * 
- */
-struct FeatureVote {
-    int featureId;
-    int keyPointId;
-};
 
-/**
- * @brief Image id <-> KeyPoint id pair
- * 
- */
-struct FeatureInfo {
-    int keyPointId;
-    int imgId;
-};
+    inline bool operator<(const QueryItem &a) {
+        return (probability < a.probability);
+    }
 
-/**
- * @brief Image info
- * 
- */
-struct ImageInfo {
-    int numFeatures;
-    cv::Size size;
+    inline bool operator>(const QueryItem &a) {
+        return (probability > a.probability);
+    }
 };
 
 /**
@@ -60,15 +66,44 @@ struct ImageInfo {
 class CvUtils {
 public:
     /**
-     * @brief Create a Mask object
+     * @brief Create a mask with specified boundary
      * 
-     * @param size - size of frame
-     * @param pose - pose of traking object
-     * @return cv::Mat - Mask object
+     * @param size - size of source mat
+     * @param boundary - boundary of mask
+     * @param strategy - strategy of masking
+     * @param color - mask color (default = 255)
+     * @return cv::Mat - masked mat
      */
-    static cv::Mat createMask(cv::Size size, const ObjectPosition &pose) {
-        const cv::Mat mask = cv::Mat::zeros(std::move(size), CV_8UC1);
-        cv::fillConvexPoly(mask, convertVecType<cv::Point>(pose), cv::Scalar(255), 16, 0);
+    static cv::Mat createMask(const cv::Size &size, const Boundary &boundary, MaskingStrategy strategy = MASK_FAST,
+                              cv::Scalar color = cv::Scalar(255)) {
+        cv::Mat mask = cv::Mat::zeros(size, CV_8UC1);
+        if (strategy == MASK_ACCURACY)
+            cv::fillConvexPoly(mask, convertVecType<cv::Point>(boundary), color, cv::LINE_AA, 0);
+        else if (strategy == MASK_FAST) {
+            float x_min = FLT_MAX, y_min = FLT_MAX,
+                    x_max = 0, y_max = 0;
+            for (const auto &b: boundary) {
+                if (b.x > x_max)
+                    x_max = b.x;
+
+                if (b.x < x_min)
+                    x_min = b.x;
+
+                if (b.y > y_max)
+                    y_max = b.y;
+
+                if (b.y < y_min)
+                    y_min = b.y;
+            }
+
+            x_min = std::max(0.f, std::min(x_min, (float) size.width));
+            y_min = std::max(0.f, std::min(y_min, (float) size.height));
+
+            x_max = std::min((float) size.width, std::max(x_max, 0.f));
+            y_max = std::min((float) size.height, std::max(y_max, 0.f));
+
+            mask(cv::Rect(x_min, y_min, x_max - x_min, y_max - y_min)) = color;
+        }
         return mask;
     }
 
@@ -78,7 +113,7 @@ public:
      * @param v Point`s vector
      * @return cv::Mat Mat object
      */
-    static cv::Mat pointsToMat(const ObjectPosition &v) {
+    static cv::Mat pointsToMat(const Boundary &v) {
         size_t size = v.size();
         cv::Mat ret(3, size, CV_64FC1);
 
@@ -434,7 +469,7 @@ public:
      * @param homo Homography matrix
      * @return std::vector<cv::Point2f> Object coordinates
      */
-    static std::vector<cv::Point2f> calcObjPos(const ObjectPosition &pos, cv::Mat &homo) {
+    static std::vector<cv::Point2f> calcObjPos(const Boundary &pos, cv::Mat &homo) {
         std::vector<cv::Point2f> position;
         if (pos.empty())
             return position;
