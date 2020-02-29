@@ -11,29 +11,37 @@
 #include "../Utils/CvUtils.hpp"
 
 /**
- * @brief Class provides KLT tracking
- * 
+ * @brief Class provides tracking
  */
-class Tracking {
+class Tracker {
 public:
-    ObjectPosition objectPosition;    // coords of object`s corners
-    std::vector<cv::Point2f> corners; // corners
+    // coords of object`s corners
+    Boundary objectPosition;
+    // corners
+    std::vector<cv::Point2f> corners;
 private:
-    cv::Mat prevFrame;      // processed frame
-    cv::Mat homography;     // homography
-    int MIN_FEATURE_POINTS; // min amount of founded feature points
+    // processed frame
+    cv::Mat prevFrame;
+    // homography
+    cv::Mat homography;
+    // min amount of founded feature points
+    int MIN_FEATURE_POINTS;
     /* Corner detector props */
-    int maxAmountCorners;      // maximum amount of corners
-    double minQualityCorners;  // minimum quality of corners
-    double minDistanceCorners; // minimum distance of corners
+    // maximum amount of corners
+    int maxAmountCorners;
+    // minimum quality of corners
+    double minQualityCorners;
+    // minimum distance of corners
+    double minDistanceCorners;
     /* ------------------- */
 
     /* calcOpticalFlowPyrLK props */
-    std::vector<uchar> opticalFlowStatus; // status of tracking points
-    /* ------------------- */
+    // status of tracking points
+    std::vector<uchar> opticalFlowStatus;
     std::vector<cv::Mat> prevPyr, nextPyr;
+    /* ------------------- */
 public:
-    Tracking();
+    Tracker();
 
     /**
      * @brief Start tracking
@@ -41,7 +49,7 @@ public:
      * @param frame - frame
      * @param pos - position
      */
-    void start(const cv::Mat &frame, const ObjectPosition &pos);
+    void start(const cv::Mat &frame, const Boundary &pos);
 
     /**
      * @brief Trying continue tracking
@@ -59,7 +67,7 @@ public:
      */
     cv::Mat getHomography() { return homography; }
 
-    ~Tracking();
+    ~Tracker();
 };
 
 #endif // __TRACKING__

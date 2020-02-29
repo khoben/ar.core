@@ -20,9 +20,17 @@ Java_com_khoben_arcore_OpenCVJNI_init(JNIEnv *env, jclass type, jlong matAddrRgb
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_khoben_arcore_OpenCVJNI_start(JNIEnv *env, jclass type, jlong matAddrRgba,
-                                         jlong matAddrGray) {
+Java_com_khoben_arcore_OpenCVJNI_addMarker(JNIEnv *env, jclass type, jlong matAddrRgba) {
 
+    Mat& mRgb = *(Mat*)matAddrRgba;
+    addMarker(mRgb);
+    return 0;
+
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_khoben_arcore_OpenCVJNI_process(JNIEnv *env, jclass clazz, jlong matAddrRgba,
+                                         jlong matAddrGray) {
     Mat& mRgb = *(Mat*)matAddrRgba;
     Mat& mGray = *(Mat*)matAddrGray;
 
@@ -34,15 +42,4 @@ Java_com_khoben_arcore_OpenCVJNI_start(JNIEnv *env, jclass type, jlong matAddrRg
     retVal = (jint)conv;
 
     return retVal;
-
-}
-
-extern "C"
-JNIEXPORT jint JNICALL
-Java_com_khoben_arcore_OpenCVJNI_addMarker(JNIEnv *env, jclass type, jlong matAddrRgba) {
-
-    Mat& mRgb = *(Mat*)matAddrRgba;
-    addMarker(mRgb);
-    return 0;
-
 }

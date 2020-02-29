@@ -4,20 +4,19 @@
 #define __RECOGNITION__
 
 #include <opencv2/features2d/features2d.hpp>
-#include "../Utils/CvUtils.hpp"
-#include "MarkerlessDB.hpp"
-#include "MarkerlessTrackable.hpp"
 #include <map>
+#include "Detect.hpp"
+#include "../Utils/CvUtils.hpp"
+#include "../ARStore/MarkerlessStorage.hpp"
+#include "../Tracking/MarkerlessTrackable.hpp"
 
 /**
- * @brief Class provides store and recognition marker image
+ * @brief Class provides recognition marker functionality
  * 
  */
-class Recognition {
-private:
-    MarkerlessDB *markerlessDb;                                // 'Bag of visual words' object
+class DetectMarkerless : public Detect {
 public:
-    Recognition();
+    DetectMarkerless();
 
     /**
      * @brief Add image to marker database
@@ -25,8 +24,15 @@ public:
      * @param img Marker image
      * @return int 
      */
-    int addTrackImage(const cv::Mat &img);
+    int addTrackImage(const cv::Mat &img) override;
 
+    /**
+     * @brief Add descriptors to database
+     * @param descriptors
+     * @param keyPoints
+     * @param size
+     * @return
+     */
     int addTrackImage(const cv::Mat &descriptors,
                       const std::vector<cv::KeyPoint> &keyPoints, const cv::Size &size);
 
@@ -34,12 +40,11 @@ public:
      * @brief Make a query 
      * 
      * @param img Frame
-     * @param amountRes Limit of results
      * @return std::vector<QueryItem> Query results
      */
-    std::vector<QueryItem> queryImage(const cv::Mat &img, int amountRes = 1);
+    std::vector<QueryItem> queryImage(const cv::Mat &img) override;
 
-    ~Recognition();
+    ~DetectMarkerless();
 };
 
 #endif // __RECOGNITION__

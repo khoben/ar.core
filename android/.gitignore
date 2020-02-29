@@ -7,3 +7,5 @@
 /build
 /captures
 .externalNativeBuild
+/cv42
+/opencv*
