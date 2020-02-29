@@ -8,8 +8,8 @@ Currently have PC and Android version (JNI).
 
 ## Built With
 
-* CMake 3.6
-* OpenCV 4.1 (PC and Android)
+* CMake 3.6 / C++17
+* OpenCV 4.2.0 (PC and Android)
 * Android NDK 20
 
 ## Tests
@@ -35,6 +35,5 @@ Currently have PC and Android version (JNI).
 </p>
 
 ## Known issues
-* Unable to find multiple objects with same marker
-* Sometimes it calculates incorrect object coordinates on tracking phase
+* Sometimes it calculates incorrect object`s coordinates on tracking phase
 

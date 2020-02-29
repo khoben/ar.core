@@ -6,8 +6,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 
-#SET(OpenCV_DIR D:/Android/OpenCV31/sdk/native/jni)
-SET(OpenCV_DIR D:/Android/OpenCV-android-sdk/sdk/native/jni)
+SET(OpenCV_DIR D:/Android/OpenCV42/sdk/native/jni)
 find_package(OpenCV REQUIRED)
 message(STATUS "opencv found: ${OpenCV_LIBS}")
 

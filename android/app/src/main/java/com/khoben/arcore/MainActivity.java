@@ -74,15 +74,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         javaCameraView = findViewById(R.id.java_camera_view);
         javaCameraView.setVisibility(View.VISIBLE);
+        javaCameraView.setCameraPermissionGranted();
         javaCameraView.setCvCameraViewListener(this);
     }
 
     private void loadMarkers() {
-        // load marker
+        // load markers
         Mat mat_1 = UtilsJNI.loadMatFromDrawables(this, R.drawable.miku);
-        Mat mat_2 = UtilsJNI.loadMatFromDrawables(this, R.drawable.ar);
         Mat mat_3 = UtilsJNI.loadMatFromDrawables(this, R.drawable.czech);
-        OpenCVJNI.addMarker(mat_2.getNativeObjAddr());
         OpenCVJNI.addMarker(mat_3.getNativeObjAddr());
         OpenCVJNI.addMarker(mat_1.getNativeObjAddr());
     }
@@ -128,9 +127,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Log.i(TAG, "on frame");
         frame = inputFrame.rgba();
-        OpenCVJNI.start(frame.getNativeObjAddr(), processedFrame.getNativeObjAddr());
+        OpenCVJNI.process(frame.getNativeObjAddr(), processedFrame.getNativeObjAddr());
         return processedFrame;
     }
 }

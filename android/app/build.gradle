@@ -11,7 +11,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++14 -frtti -fexceptions"
+                cppFlags "-std=c++17 -frtti -fexceptions"
                 //abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
                 //arguments "-DANDROID_STL=c++_shared"
             }
@@ -27,6 +27,7 @@ android {
     }
     buildTypes {
         release {
+            buildConfigField "Boolean", "DEBUG_MODE", "false"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -45,5 +46,5 @@ dependencies {
     testImplementation 'junit:junit:4.13-beta-3'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation project(path: ':opencv410')
+    implementation project(path: ':opencv42')
 }
