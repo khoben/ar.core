@@ -26,9 +26,9 @@ private:
     // knn size
     const int KNN_SIZE = 2;
     // Min amount of matched features
-    const int MIN_NUM_MATCH = 30;
+    const int MIN_NUM_MATCH = 15;
     // Min value of probability
-    const float MIN_PROBABILITY = 0.8f;
+    const float MIN_PROBABILITY = 0.7f;
 public:
     MarkerlessStorage();
 
