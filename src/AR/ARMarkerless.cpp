@@ -121,7 +121,7 @@ void ARMarkerless::init(const cv::Size &frameSize, const int maxSize) {
     while ((frameMaxSize / scale) > maxSize) {
         scale *= 2;
     }
-    querySize = cv::Size(frameSize.height / scale, frameSize.width / scale);
+    querySize = cv::Size(frameSize.width / scale, frameSize.height / scale);
 }
 
 
