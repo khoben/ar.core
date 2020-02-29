@@ -1,7 +1,7 @@
 #ifndef AR_CORE_AR_HPP
 #define AR_CORE_AR_HPP
 
-#include "src/Tracking/Tracker.hpp"
+#include "../Tracking/Tracker.hpp"
 #include "../Detection/DetectMarkerless.hpp"
 
 /**
@@ -56,6 +56,10 @@ public:
     * @return int
     */
     virtual int addAll(const std::vector<cv::Mat> &imgs) = 0;
+
+    float getScale() {
+        return scale;
+    }
 };
 
 
