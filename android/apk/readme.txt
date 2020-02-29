@@ -1,0 +1,1 @@
+https://github.com/khoben/ar.core/releases/tag/v0.1-beta
