@@ -1,9 +1,9 @@
 #ifndef AR_CORE_ANDROID_HPP
 #define AR_CORE_ANDROID_HPP
 
-#include "opencv2/opencv.hpp"
-#include "AR/Ar.hpp"
-#include "Utils/CvUtils.hpp"
+#include <opencv2/opencv.hpp>
+#include <AR/ARMarkerless.hpp>
+#include <Utils/CvUtils.hpp>
 
 using namespace cv;
 
@@ -46,15 +46,6 @@ using namespace cv;
     printf(__VA_ARGS__);
 #endif // ANDROID
 
-/**
- * @brief Make query resised frame
- * 
- * @param size Size of source frame
- * @param max_size Max size
- * @param scale Initial scale
- * @return cv::Mat Query-resized frame
- */
-cv::Mat makeQueryMat(cv::Size size, int max_size, int &scale);
 
 /**
  * @brief Init AR instance
