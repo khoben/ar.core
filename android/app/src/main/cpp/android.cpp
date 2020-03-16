@@ -25,7 +25,7 @@ int process(Mat frame, Mat &out) {
     frame.copyTo(out);
     for (auto &r: result) {
         cv::Scalar val(255);
-        Boundary objPose = CvUtils::scalePoints(r.objPose, ar->getScale());
+        Boundary objPose = r.objPose;
         cv::line(out, objPose[3], objPose[0], val, 3);
         for (int i = 0; i < 3; i++) {
             line(out, objPose[i], objPose[i + 1], val, 3);

@@ -8,7 +8,7 @@
  */
 class Detect {
 protected:
-    std::shared_ptr<Storage> storage;   // marker storage
+    std::unique_ptr<Storage> storage;   // marker storage
 public:
     /**
      * @brief Add image to marker database

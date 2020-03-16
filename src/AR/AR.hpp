@@ -21,7 +21,7 @@ protected:
     // tracking instances
     std::vector<std::pair<QueryItem, std::unique_ptr<Tracker>>> trackingItems;
     // recognition instance
-    std::shared_ptr<Detect> recognitionInstance;
+    std::unique_ptr<Detect> recognitionInstance;
 
 public:
     /**
@@ -56,10 +56,6 @@ public:
     * @return int
     */
     virtual int addAll(const std::vector<cv::Mat> &imgs) = 0;
-
-    float getScale() {
-        return scale;
-    }
 };
 
 

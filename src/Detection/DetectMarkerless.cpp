@@ -1,7 +1,7 @@
 #include "DetectMarkerless.hpp"
 
 DetectMarkerless::DetectMarkerless() {
-    storage = std::make_shared<MarkerlessStorage>();
+    storage = std::make_unique<MarkerlessStorage>();
 }
 
 int DetectMarkerless::addTrackImage(const cv::Mat &img) {
@@ -10,6 +10,9 @@ int DetectMarkerless::addTrackImage(const cv::Mat &img) {
 }
 
 std::vector<QueryItem> DetectMarkerless::queryImage(const cv::Mat &img) {
+    if (img.empty()) {
+        throw std::runtime_error("Empty query img at Detect::queryImage()");
+    }
     std::vector<QueryItem> queryReturn;
     queryReturn = storage->match(img);
     return queryReturn;

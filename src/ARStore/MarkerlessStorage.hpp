@@ -16,7 +16,7 @@
 class MarkerlessStorage : public Storage {
 private:
     // Markers
-    std::vector<std::unique_ptr<MarkerlessTrackable>> markers;
+    std::vector<MarkerlessTrackable> markers;
     // Feature detector
     cv::Ptr<cv::FeatureDetector> featureDetector;
     // Descriptor matcher
@@ -28,7 +28,7 @@ private:
     // Min amount of matched features
     const int MIN_NUM_MATCH = 15;
     // Min value of probability
-    const float MIN_PROBABILITY = 0.7f;
+    const float MIN_PROBABILITY = 0.02f;
 public:
     MarkerlessStorage();
 

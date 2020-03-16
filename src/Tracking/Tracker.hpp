@@ -20,6 +20,10 @@ public:
     // corners
     std::vector<cv::Point2f> corners;
 private:
+    const bool ALLOW_TRACK_POINT_OUTSIDE_FRAME = true;
+    const int RANSAC_THRESHOLD = 10;
+    const cv::Size OPTICAL_FLOW_WINDOW_SIZE = cv::Size(21, 21);
+    const int OPTICAL_FLOW_PYRO_MAX_LEVEL = 3;
     // processed frame
     cv::Mat prevFrame;
     // homography

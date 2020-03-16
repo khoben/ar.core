@@ -11,6 +11,7 @@
  * 
  */
 class ARMarkerless : public AR {
+private:
 public:
     ARMarkerless();
 
@@ -57,6 +58,7 @@ public:
      */
     int add(const cv::Mat &descriptors,
             const std::vector<cv::KeyPoint> &keyPoints, const cv::Size &size);
+
 
     ~ARMarkerless();
 };

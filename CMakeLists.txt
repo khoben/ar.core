@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.4.1)
 project(ar_core)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 file(GLOB_RECURSE SOURCE_FILES
         "src/*.hpp"
         "src/*.cpp"
         )
 
-set(OpenCV_DIR "D:\\opencv-4.1.1\\build\\install")
+set(OpenCV_DIR "D:/opencv-4.2.0/build/install")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 find_package(OpenCV REQUIRED)

@@ -26,21 +26,21 @@ bool Tracker::keepTracking(const cv::Mat &frame) {
         return false;
 
     if (prevPyr.empty())
-        cv::buildOpticalFlowPyramid(prevFrame, prevPyr, cv::Size(21, 21), 3, true);
+        cv::buildOpticalFlowPyramid(prevFrame, prevPyr, OPTICAL_FLOW_WINDOW_SIZE, OPTICAL_FLOW_PYRO_MAX_LEVEL);
 
-    cv::buildOpticalFlowPyramid(frame, nextPyr, cv::Size(21, 21), 3, true);
-    // https://docs.opencv.org/3.0-beta/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowpyrlk
-//    calcOpticalFlowPyrLK(prevFrame, frame, corners, nextCorners, opticalFlowStatus, err);
+    cv::buildOpticalFlowPyramid(frame, nextPyr, OPTICAL_FLOW_WINDOW_SIZE, OPTICAL_FLOW_PYRO_MAX_LEVEL);
 
-    cv::calcOpticalFlowPyrLK(prevPyr, nextPyr, corners, nextCorners, opticalFlowStatus, err, cv::Size(21, 21), 3);
+    cv::calcOpticalFlowPyrLK(prevPyr, nextPyr, corners, nextCorners, opticalFlowStatus, err, OPTICAL_FLOW_WINDOW_SIZE,
+                             OPTICAL_FLOW_PYRO_MAX_LEVEL);
 
     std::vector<cv::Point2f> trackedPrePts;
     std::vector<cv::Point2f> trackedPts;
 
     int found = 0;
     for (size_t i = 0; i < opticalFlowStatus.size(); i++) {
-        if (opticalFlowStatus[i] && corners.size() > i && norm(nextCorners[i] - corners[i]) <=
-                                                          100/*&& m_prevPts_twice.size()>i && norm(m_prevPts[i] - m_prevPts_twice[i]) <= 2*/) {
+        //     point tracked
+        if (opticalFlowStatus[i] && corners.size() > i &&
+            norm(nextCorners[i] - corners[i]) <= 100) {
             found++;
             trackedPrePts.push_back(corners[i]);
             trackedPts.push_back(nextCorners[i]);
@@ -48,52 +48,52 @@ bool Tracker::keepTracking(const cv::Mat &frame) {
     }
 
     // enough tracking points
-    if (found < MIN_FEATURE_POINTS) {
-        return false;
-    } else {
-        homography = cv::findHomography(cv::Mat(trackedPrePts), cv::Mat(trackedPts), cv::RANSAC, 10);
+    if (found > MIN_FEATURE_POINTS) {
+        homography = cv::findHomography(cv::Mat(trackedPrePts), cv::Mat(trackedPts), cv::RANSAC, RANSAC_THRESHOLD);
         if (cv::countNonZero(homography) == 0) {
             std::cout << "Zero homo" << std::endl;
             return false;
-        } else {
-            // Calc object position on frame
-            std::vector<cv::Point2f> nextObjPos;
-//            nextObjPos = CvUtils::calcObjPos(objectPosition, homography);
-            cv::perspectiveTransform(objectPosition, nextObjPos, homography);
-//            cv::Size size = prevFrame.size();
-
-            // Check if points outside frame
-//            if (!CvUtils::ptsInsideFrame(size, nextObjPos)) {
-//                std::cout << "pts outside frame" << std::endl;
-//                return false;
-//            }
-            // Check if detected boundary is a rect
-            if (!CvUtils::_proveRect(nextObjPos)) {
-                std::cout << "not a rect" << std::endl;
-                return false;
-            }
-            // Check optical flow consistence
-            if (nextCorners.size() != opticalFlowStatus.size()) {
-                std::cout << "flow error" << std::endl;
-                return false;
-            }
-
-            // Count good points (with status == 1) inside object boundary
-            int featurePtInsideRect = CvUtils::amountGoodPtInsideRect(nextCorners, nextObjPos, opticalFlowStatus);
-
-            if (featurePtInsideRect < MIN_FEATURE_POINTS) {
-                std::cout << "not enough points" << std::endl;
-                return false;
-            }
-
-            // Prepare to next frame
-            frame.copyTo(prevFrame);
-            prevPyr.swap(nextPyr);
-            corners = trackedPts;
-            objectPosition = nextObjPos;
         }
+        // Calc object position on frame
+        std::vector<cv::Point2f> nextObjPos;
+        cv::perspectiveTransform(objectPosition, nextObjPos, homography);
+
+        if (!ALLOW_TRACK_POINT_OUTSIDE_FRAME)
+            // Check if points outside frame
+            if (!CvUtils::ptsInsideFrame(prevFrame.size(), nextObjPos)) {
+                std::cout << "pts outside frame" << std::endl;
+                return false;
+            }
+
+        // Check if detected boundary is a rect
+        if (!CvUtils::proveRect(nextObjPos)) {
+            std::cout << "not a rect" << std::endl;
+            return false;
+        }
+        // Check optical flow consistence
+        if (nextCorners.size() != opticalFlowStatus.size()) {
+            std::cout << "flow error" << std::endl;
+            return false;
+        }
+
+        // Count good points (with status == 1) inside object boundary
+        int featurePtInsideRect = CvUtils::amountGoodPtInsideRect(nextCorners, nextObjPos, opticalFlowStatus);
+
+        if (featurePtInsideRect < MIN_FEATURE_POINTS) {
+            std::cout << "not enough points" << std::endl;
+            return false;
+        }
+
+        // Prepare to next frame
+        frame.copyTo(prevFrame);
+        prevPyr.swap(nextPyr);
+        corners = trackedPts;
+        objectPosition = nextObjPos;
+
+        return true;
     }
-    return true;
+
+    return false;
 }
 
 Tracker::~Tracker()

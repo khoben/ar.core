@@ -1,10 +1,9 @@
 #include "ARMarkerless.hpp"
 
 ARMarkerless::ARMarkerless() {
-    recognitionInstance = std::make_shared<DetectMarkerless>();
+    recognitionInstance = std::make_unique<DetectMarkerless>();
     scale = 1.f;
 }
-
 
 std::vector<QueryItem> ARMarkerless::process(const cv::Mat &frame) {
     if (frame.empty())
@@ -37,29 +36,33 @@ std::vector<QueryItem> ARMarkerless::process(const cv::Mat &frame) {
     //          object.lost => continue
     //      return objects{detected && tracked}.pose
 
-    // detect
+    std::vector<QueryItem> recognizedItems, // detected objects
+            result;         // tracked objects
 
-    // masking
-    queryMat.copyTo(maskedMat);
-    for (const auto &item: trackingItems) {
-        cv::bitwise_or(queryMat, CvUtils::createMask(queryMat.size(), item.first.objPose), maskedMat);
+    /* detection */
+
+    // masking: make already detected regions not-detectable (maskedMat)
+    // unmasked image (queryMat) for tracking stage
+
+    if (trackingItems.empty()) {
+        recognizedItems = recognitionInstance->queryImage(queryMat);
+    } else {
+        // mask
+        queryMat.copyTo(maskedMat);
+        for (const auto &item: trackingItems)
+            maskedMat |= CvUtils::createMask(maskedMat.size(), item.first.objPose);
+        recognizedItems = recognitionInstance->queryImage(maskedMat);
     }
-    // detection process
-    auto recognizedItems = recognitionInstance->queryImage(maskedMat);
 
-    for (const auto &item: recognizedItems) {
-        trackingItems.emplace_back(item, std::make_unique<Tracker>());
-    }
+    // adds newly detected objects
+    for (const auto &item: recognizedItems) trackingItems.emplace_back(item, std::make_unique<Tracker>());
 
-
-    std::vector<QueryItem> result;
-
-    // track
+    /* tracking */
     for (auto it = trackingItems.begin(); it != trackingItems.end();) {
 
         auto item = &*it;
         bool status = false;
-        auto &tracking = item->second;
+        auto tracking = &*item->second;
         switch (item->first.status) {
             case DETECTED: // start tracking
                 item->first.status = TRACKED;
@@ -70,7 +73,6 @@ std::vector<QueryItem> ARMarkerless::process(const cv::Mat &frame) {
             case TRACKED:   // keep tracking
                 status = tracking->keepTracking(this->queryMat);
                 // update pose
-                // TODO: pose scaling
                 item->first.objPose = tracking->objectPosition;
                 break;
             case LOST:
@@ -83,7 +85,11 @@ std::vector<QueryItem> ARMarkerless::process(const cv::Mat &frame) {
             // lost => remove
             item->first.status = LOST;
         } else if (item->first.status == TRACKED) {
-            result.push_back(item->first);
+            // pose scaling
+            QueryItem r = item->first;
+            if (!querySize.empty())
+                r.objPose = CvUtils::scalePoints(item->first.objPose, scale);
+            result.push_back(r);
         }
 
         // remove lost and go next

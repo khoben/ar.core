@@ -158,68 +158,13 @@ public:
     }
 
     /**
-     * @brief Check points inside of area
-     * 
-     * @param img_size Size of area
-     * @param pts Vector of points
-     * @return true All points inside area
-     * @return false One ore more points outside of area
-     */
-    static bool _ptsInsideFrame(const cv::Size &img_size, std::vector<cv::Point2f> &pts) {
-        auto itr = pts.begin();
-        while (itr != pts.end()) {
-            if (itr->x < 0 || itr->x >= img_size.width || itr->y < 0 || itr->y >= img_size.height) {
-                return false;
-            } else {
-                itr++;
-            }
-        }
-        return true;
-    }
-
-    /***************HELP FUNCTION FOR PROVERECT(PTS)*****************/
-    static bool isOrthogonal(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c) {
-        const float eps = 1e-8;
-        return fabs((b.x - a.x) * (b.x - c.x) +
-                    (b.y - a.y) * (b.y - c.y)) < eps;
-    }
-
-    static bool isRect(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d) {
-        return isOrthogonal(a, b, c) &&
-               isOrthogonal(b, c, d) &&
-               isOrthogonal(c, d, a);
-    }
-
-    static bool isRectAnyOrder(const cv::Point2f &a, const cv::Point2f &b, const cv::Point2f &c, const cv::Point2f &d) {
-        return isRect(a, b, c, d) ||
-               isRect(b, c, a, d) ||
-               isRect(c, a, b, d);
-    }
-    /*******************************************************************/
-
-    /**
      * @brief Check if points are Rect
      * 
      * @param pts Vector of points
      * @return true Its a rectangle
      * @return false Its not a rectangle
      */
-    static bool proveRect(std::vector<cv::Point2f> &pts) {
-        if (pts.size() != 4)
-            return false;
-
-        return isRectAnyOrder(pts[0], pts[1], pts[2], pts[3]);
-
-    }
-
-    /**
-     * @brief Check if points are Rect
-     * 
-     * @param pts Vector of points
-     * @return true Its a rectangle
-     * @return false Its not a rectangle
-     */
-    static bool _proveRect(std::vector<cv::Point2f> &rect_pts) {
+    static bool proveRect(std::vector<cv::Point2f> &rect_pts) {
         CV_Assert(rect_pts.size() == 4);
 
         bool result_f = true;
@@ -254,114 +199,6 @@ public:
     }
 
     /**
-     * @brief Given three colinear points p, q, r, the function checks if 
-     * point q lies on line segment 'pr'
-     * 
-     * @param p 
-     * @param q 
-     * @param r 
-     * @return true 
-     * @return false 
-     */
-    static bool onSegment(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
-        return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) &&
-               q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
-    }
-
-    /**
-     * @brief To find orientation of ordered triplet (p, q, r).
-     * The function returns following values
-     * 0 --> p, q and r are colinear
-     * 1 --> Clockwise
-     * 2 --> Counterclockwise
-     * 
-     * @param p 
-     * @param q 
-     * @param r 
-     * @return int 
-     */
-    static int orientation(const cv::Point2f &p, const cv::Point2f &q, const cv::Point2f &r) {
-        int val = (q.y - p.y) * (r.x - q.x) -
-                  (q.x - p.x) * (r.y - q.y);
-
-        if (val == 0)
-            return 0;             // colinear
-        return (val > 0) ? 1 : 2; // clock or counterclock wise
-    }
-
-    /**
-     * @brief The function that returns true if line segment 'p1q1'and 'p2q2' intersect.
-     * 
-     * @param p1 
-     * @param q1 
-     * @param p2 
-     * @param q2 
-     * @return true 
-     * @return false 
-     */
-    static bool
-    isIntersect(const cv::Point2f &p1, const cv::Point2f &q1, const cv::Point2f &p2, const cv::Point2f &q2) {
-        // Find the four orientations needed for general and
-        // special cases
-        int o1 = orientation(p1, q1, p2);
-        int o2 = orientation(p1, q1, q2);
-        int o3 = orientation(p2, q2, p1);
-        int o4 = orientation(p2, q2, q1);
-
-        // General case
-        if (o1 != o2 && o3 != o4)
-            return true;
-
-        // Special Cases
-        // p1, q1 and p2 are colinear and p2 lies on segment p1q1
-        if (o1 == 0 && onSegment(p1, p2, q1))
-            return true;
-
-        // p1, q1 and p2 are colinear and q2 lies on segment p1q1
-        if (o2 == 0 && onSegment(p1, q2, q1))
-            return true;
-
-        // p2, q2 and p1 are colinear and p1 lies on segment p2q2
-        if (o3 == 0 && onSegment(p2, p1, q2))
-            return true;
-
-        // p2, q2 and q1 are colinear and q1 lies on segment p2q2
-        if (o4 == 0 && onSegment(p2, q1, q2))
-            return true;
-
-        return false; // Doesn't fall in any of the above cases
-    }
-
-    /**
-     * @brief Rectangle with provided points:pt is inside rectangle:rect
-     * 
-     * @param rect Rectangle
-     * @param pt Vector of points test rectangle
-     * @return true Inside
-     * @return false Outside
-     */
-    static bool isInsideRect(const std::vector<cv::Point2f> &rect, const cv::Point2f &pt) {
-        int size = rect.size();
-        if (size < 4)
-            return false;
-
-        cv::Point2f extreme(INFINITY, pt.y);
-        int count = 0, i = 0;
-        do {
-            int next = (i + 1) % size;
-            if (isIntersect(rect[i], rect[next], pt, extreme)) {
-                if (orientation(rect[i], pt, rect[next]) == 0)
-                    return onSegment(rect[i], pt, rect[next]);
-
-                count++;
-            }
-            i = next;
-        } while (i != 0);
-
-        return count & 1;
-    }
-
-    /**
      * @brief Count number of points inside a rectangle
      * with good tracking status (=1)
      * 
@@ -389,102 +226,6 @@ public:
         });
 
         return count;
-    }
-
-    /**
-     * @brief Count number of points inside a rectangle
-     * with good tracking status (=1)
-     * 
-     * @param points Vector of points
-     * @param corner_pts Vector of corners
-     * @param status Vector of status
-     * @return int Number of good points
-     */
-    static int _amountGoodPtInsideRect(std::vector<cv::Point2f> &points, std::vector<cv::Point2f> &corner_pts,
-                                       std::vector<unsigned char> &status) {
-        CV_Assert(corner_pts.size() == 4);
-        CV_Assert(points.size() == status.size());
-
-        // ax+by+c=0
-        float a[4];
-        float b[4];
-        float c[4];
-
-        a[0] = corner_pts[3].y - corner_pts[0].y;
-        a[1] = corner_pts[2].y - corner_pts[1].y;
-        a[2] = corner_pts[1].y - corner_pts[0].y;
-        a[3] = corner_pts[2].y - corner_pts[3].y;
-
-        b[0] = corner_pts[0].x - corner_pts[3].x;
-        b[1] = corner_pts[1].x - corner_pts[2].x;
-        b[2] = corner_pts[0].x - corner_pts[1].x;
-        b[3] = corner_pts[3].x - corner_pts[2].x;
-
-        c[0] = corner_pts[0].y * corner_pts[3].x - corner_pts[3].y * corner_pts[0].x;
-        c[1] = corner_pts[1].y * corner_pts[2].x - corner_pts[2].y * corner_pts[1].x;
-        c[2] = corner_pts[0].y * corner_pts[1].x - corner_pts[1].y * corner_pts[0].x;
-        c[3] = corner_pts[3].y * corner_pts[2].x - corner_pts[2].y * corner_pts[3].x;
-
-        float max_x, min_x, max_y, min_y;
-        max_x = corner_pts[0].x;
-        min_x = corner_pts[0].x;
-        max_y = corner_pts[0].y;
-        min_y = corner_pts[0].y;
-
-        int i;
-        for (i = 1; i < 4; i++) {
-            if (corner_pts[i].x > max_x)
-                max_x = corner_pts[i].x;
-            if (corner_pts[i].x < min_x)
-                min_x = corner_pts[i].x;
-            if (corner_pts[i].y > max_y)
-                max_y = corner_pts[i].y;
-            if (corner_pts[i].y < min_y)
-                min_y = corner_pts[i].y;
-        }
-
-        float val[4];
-        size_t size = points.size();
-        int count = 0;
-        for (size_t j = 0; j < size; j++) {
-            if (status[j] > 0) {
-                for (i = 0; i < 4; i++) {
-                    val[i] = a[i] * points[j].x + b[i] * points[j].y + c[i];
-                }
-                if (val[0] * val[1] <= 0 && val[2] * val[3] <= 0) {
-                    count++;
-                } else {
-                    status[j] = 0;
-                }
-            }
-        }
-
-        return count;
-    }
-
-    /**
-     * @brief Calculates the object coordinates depending on homography matrix
-     * 
-     * @param pos Position of object
-     * @param homo Homography matrix
-     * @return std::vector<cv::Point2f> Object coordinates
-     */
-    static std::vector<cv::Point2f> calcObjPos(const Boundary &pos, cv::Mat &homo) {
-        std::vector<cv::Point2f> position;
-        if (pos.empty())
-            return position;
-
-        cv::Mat src = pointsToMat(pos);
-        cv::Mat dst = homo * src;
-
-        cv::Point2f point;
-        for (int i = 0; i < dst.cols; ++i) {
-            point.x = (float) (dst.at<double>(0, i) / dst.at<double>(2, i));
-            point.y = (float) (dst.at<double>(1, i) / dst.at<double>(2, i));
-            position.push_back(point);
-        }
-
-        return position;
     }
 
     /**
@@ -542,7 +283,6 @@ public:
      */
     static float binomialCDF(int x, int n, float p) {
         if (p == 0 || p > 1 || p < 0) return 0.f;
-
         float cdf = 0.f;
         float b = 0.f;
         float logP = log(p);
@@ -557,6 +297,11 @@ public:
         return cdf;
     }
 
+    /**
+     * @brief decode mat from base64 string
+     * @param encoded base64 string
+     * @return decoded image
+     */
     static cv::Mat decodeMat(const std::string &encoded) {
         std::string dec_jpg = base64_decode(encoded);
         std::vector<uchar> data(dec_jpg.begin(), dec_jpg.end());
@@ -564,6 +309,11 @@ public:
         return img;
     }
 
+    /**
+     * @brief encode mat to base64 string
+     * @param img source image
+     * @return encoded string
+     */
     static std::string encodeMat(const cv::Mat &img) {
         std::vector<uchar> buf;
         cv::imencode(".jpg", img, buf);
